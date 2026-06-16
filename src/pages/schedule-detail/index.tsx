@@ -16,15 +16,59 @@ interface BoardStep {
   description: string;
   path?: string;
   isTab?: boolean;
+  actionType?: 'navigate' | 'startCeremony' | 'completeCeremony';
+  prepareHint?: string;
 }
 
 const boardSteps: BoardStep[] = [
-  { key: 'booked', label: '预约已确认', icon: '📋', description: '档期已预约' },
-  { key: 'communicate', label: '家属沟通', icon: '💬', description: '已完成首次沟通', path: '/pages/family/index' },
-  { key: 'flow_confirmed', label: '流程确认', icon: '⚙️', description: '仪式流程已确认', path: '/pages/ceremony/index', isTab: true },
-  { key: 'ceremony_start', label: '仪式开始', icon: '▶️', description: '仪式已开始' },
-  { key: 'ceremony_complete', label: '仪式完成', icon: '✅', description: '仪式已圆满完成' },
-  { key: 'settled', label: '服务结算', icon: '💰', description: '费用已结算', path: '/pages/settlement/index' }
+  {
+    key: 'booked',
+    label: '预约已确认',
+    icon: '📋',
+    description: '档期已预约，可查看详情或编辑',
+    prepareHint: '点击查看预约资料'
+  },
+  {
+    key: 'communicate',
+    label: '家属沟通',
+    icon: '💬',
+    description: '记录家属需求和沟通情况',
+    path: '/pages/family/index',
+    prepareHint: '提前进入准备页面'
+  },
+  {
+    key: 'flow_confirmed',
+    label: '流程确认',
+    icon: '⚙️',
+    description: '按宗教类型确认仪式流程',
+    path: '/pages/ceremony/index',
+    isTab: true,
+    prepareHint: '提前进入追思流程准备'
+  },
+  {
+    key: 'ceremony_start',
+    label: '仪式开始',
+    icon: '▶️',
+    description: '点击开始仪式执行',
+    actionType: 'startCeremony',
+    prepareHint: '准备就绪后点击开始'
+  },
+  {
+    key: 'ceremony_complete',
+    label: '仪式完成',
+    icon: '✅',
+    description: '仪式完成后点击并进入结算',
+    actionType: 'completeCeremony',
+    prepareHint: '仪式结束后点击完成'
+  },
+  {
+    key: 'settled',
+    label: '服务结算',
+    icon: '💰',
+    description: '查看并申请费用结算',
+    path: '/pages/settlement/index',
+    prepareHint: '仪式完成后可申请结算'
+  }
 ];
 
 const ScheduleDetailPage: React.FC = () => {
@@ -38,11 +82,13 @@ const ScheduleDetailPage: React.FC = () => {
     advanceBoardStep,
     addOrUpdateSettlement,
     getFamilyForSchedule,
-    getSettlementByScheduleId
+    getSettlementByScheduleId,
+    getReview
   } = useAppStore();
   const [schedule, setSchedule] = useState<ScheduleItem | null>(null);
   const [settleSummary, setSettleSummary] = useState<{ text: string; color: string } | null>(null);
   const [familySummary, setFamilySummary] = useState<{ records: number; latest?: string } | null>(null);
+  const [reviewSummary, setReviewSummary] = useState<{ text: string; color: string } | null>(null);
 
   const refreshSchedule = () => {
     const data = schedules.find(s => s.id === id);
@@ -69,6 +115,14 @@ const ScheduleDetailPage: React.FC = () => {
         });
       } else {
         setFamilySummary({ records: 0 });
+      }
+      const rv = getReview(data.id);
+      if (rv && data.reviewStatus === 'done') {
+        setReviewSummary({ text: '✓ 已复盘', color: '#38A169' });
+      } else if (rv || data.reviewStatus === 'doing') {
+        setReviewSummary({ text: '📝 复盘中', color: '#D69E2E' });
+      } else {
+        setReviewSummary(null);
       }
     } else {
       Taro.showToast({ title: '档期不存在', icon: 'error' });
@@ -146,11 +200,40 @@ const ScheduleDetailPage: React.FC = () => {
   };
 
   const handleBoardStepClick = (step: BoardStep) => {
+    if (step.actionType === 'startCeremony') {
+      if (schedule.status === 'booked') {
+        handleStart();
+      } else if (schedule.status === 'ongoing') {
+        Taro.showToast({ title: '仪式已开始，请前往追思流程', icon: 'none' });
+        goCeremony();
+      } else {
+        Taro.showToast({ title: '当前状态不支持此操作', icon: 'none' });
+      }
+      return;
+    }
+    if (step.actionType === 'completeCeremony') {
+      if (schedule.status === 'ongoing') {
+        handleComplete();
+      } else if (schedule.status === 'completed') {
+        Taro.showToast({ title: '仪式已完成', icon: 'none' });
+      } else {
+        Taro.showToast({ title: '仪式尚未开始', icon: 'none' });
+      }
+      return;
+    }
+    if (step.key === 'booked') {
+      Taro.showToast({ title: '预约信息已确认', icon: 'none' });
+      return;
+    }
     if (!step.path) return;
     if (step.key === 'communicate') {
       setCurrentScheduleId(schedule.id);
     }
+    if (step.key === 'settled') {
+      setCurrentScheduleId(schedule.id);
+    }
     if (step.isTab) {
+      setCurrentScheduleId(schedule.id);
       Taro.switchTab({ url: step.path });
     } else {
       Taro.navigateTo({ url: step.path });
@@ -168,17 +251,28 @@ const ScheduleDetailPage: React.FC = () => {
     }
   };
 
+  const isStepClickable = (step: BoardStep) => {
+    if (step.actionType) return true;
+    if (step.key === 'booked') return true;
+    return !!step.path;
+  };
+
   return (
     <View className={styles.container}>
       <View className={styles.headerCard}>
-        <StatusBadge status={schedule.status} />
-        {settleSummary && (
-          <View style={{ marginTop: 12 }}>
+        <View style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+          <StatusBadge status={schedule.status} />
+          {settleSummary && (
             <Text style={{ fontSize: 22, color: settleSummary.color, fontWeight: 600 }}>
               {settleSummary.text}
             </Text>
-          </View>
-        )}
+          )}
+          {reviewSummary && (
+            <Text style={{ fontSize: 22, color: reviewSummary.color, fontWeight: 600 }}>
+              {reviewSummary.text}
+            </Text>
+          )}
+        </View>
         <View style={{ height: 12 }} />
         <Text className={styles.deceasedName}>
           {schedule.deceasedName} {genderText}
@@ -198,13 +292,13 @@ const ScheduleDetailPage: React.FC = () => {
       <View className={styles.card}>
         <SectionHeader
           title="服务执行看板"
-          subtitle="点击带链接的步骤可跳转对应页面"
+          subtitle="点击任一步骤进入对应操作，未开始也可提前准备"
         />
         <View style={{ display: 'flex', flexDirection: 'column', marginTop: 16, gap: 12 }}>
           {boardSteps.map((step, idx) => {
             const status = boardProgress?.[step.key] || 'pending';
             const style = getStepStyle(status);
-            const isClickable = !!step.path && status !== 'pending';
+            const clickable = isStepClickable(step);
             return (
               <View
                 key={step.key}
@@ -215,9 +309,9 @@ const ScheduleDetailPage: React.FC = () => {
                   background: '#F7FAFC',
                   borderRadius: 12,
                   border: `2rpx solid ${style.border}`,
-                  opacity: isClickable ? 1 : 0.9
+                  opacity: clickable ? 1 : 0.85
                 }}
-                onClick={() => isClickable && handleBoardStepClick(step)}
+                onClick={() => clickable && handleBoardStepClick(step)}
               >
                 <View
                   style={{
@@ -238,20 +332,27 @@ const ScheduleDetailPage: React.FC = () => {
                   {step.icon}
                 </View>
                 <View style={{ flex: 1 }}>
-                  <View style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <View style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <Text style={{ fontSize: 28, color: '#1A202C', fontWeight: 600 }}>
                       {idx + 1}. {step.label}
                     </Text>
-                    {step.path && isClickable && (
+                    {clickable && (
                       <Text style={{ fontSize: 20, color: '#2C5282' }}>›</Text>
                     )}
                   </View>
                   <Text style={{ fontSize: 22, color: '#718096', marginTop: 4 }}>
                     {step.description}
-                    {status === 'doing' && (
-                      <Text style={{ color: '#D69E2E', marginLeft: 8 }}> · 进行中</Text>
-                    )}
                   </Text>
+                  {status === 'pending' && step.prepareHint && (
+                    <Text style={{ fontSize: 20, color: '#2B6CB0', marginTop: 4 }}>
+                      💡 {step.prepareHint}
+                    </Text>
+                  )}
+                  {status === 'doing' && (
+                    <Text style={{ color: '#D69E2E', fontSize: 22, marginTop: 4 }}>
+                      ● 进行中
+                    </Text>
+                  )}
                 </View>
                 <View>
                   <Text
@@ -353,6 +454,25 @@ const ScheduleDetailPage: React.FC = () => {
                   最近沟通：{familySummary.latest.slice(0, 20)}...
                 </Text>
               )}
+              {(family.riskTags || []).length > 0 && (
+                <View style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                  {(family.riskTags || []).map((t, i) => (
+                    <Text
+                      key={i}
+                      style={{
+                        fontSize: 20,
+                        padding: '4rpx 12rpx',
+                        borderRadius: 8,
+                        background: '#FFF5F5',
+                        color: '#C53030',
+                        border: '1rpx solid #FED7D7'
+                      }}
+                    >
+                      ⚠️ {t}
+                    </Text>
+                  ))}
+                </View>
+              )}
             </View>
             <View
               className={styles.phoneBtn}
@@ -385,9 +505,12 @@ const ScheduleDetailPage: React.FC = () => {
         <SectionHeader title="快捷操作" />
         <View style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginTop: 16 }}>
           {[
-            { icon: '📝', label: '悼词撰写', onClick: () => Taro.navigateTo({ url: '/pages/eulogy/index' }) },
+            { icon: '📝', label: '悼词撰写', onClick: () => { setCurrentScheduleId(schedule.id); Taro.navigateTo({ url: '/pages/eulogy/index' }); } },
             { icon: '⚙️', label: '仪式流程', onClick: goCeremony },
-            { icon: '⛪', label: '宗教适配', onClick: () => Taro.navigateTo({ url: '/pages/religion/index' }) }
+            { icon: '⛪', label: '宗教适配', onClick: () => { setCurrentScheduleId(schedule.id); Taro.navigateTo({ url: '/pages/religion/index' }); } },
+            { icon: '📂', label: '案例库', onClick: () => { setCurrentScheduleId(schedule.id); Taro.switchTab({ url: '/pages/cases/index' }); } },
+            { icon: '📊', label: '服务复盘', onClick: () => { setCurrentScheduleId(schedule.id); Taro.navigateTo({ url: '/pages/review/index' }); } },
+            { icon: '📦', label: '交付清单', onClick: () => { setCurrentScheduleId(schedule.id); Taro.navigateTo({ url: '/pages/delivery/index' }); } }
           ].map((action, idx) => (
             <View
               key={idx}
@@ -434,7 +557,7 @@ const ScheduleDetailPage: React.FC = () => {
         {schedule.status === 'completed' && (
           <View
             className={classnames(styles.bottomBtn, styles.primary)}
-            onClick={() => Taro.navigateTo({ url: '/pages/settlement/index' })}
+            onClick={() => { setCurrentScheduleId(schedule.id); Taro.navigateTo({ url: '/pages/settlement/index' }); }}
           >
             💰 查看结算
           </View>

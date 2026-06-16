@@ -10,7 +10,9 @@ export default defineAppConfig({
     'pages/family/index',
     'pages/religion/index',
     'pages/settlement/index',
-    'pages/case-detail/index'
+    'pages/case-detail/index',
+    'pages/delivery/index',
+    'pages/review/index'
   ],
   window: {
     backgroundTextStyle: 'light',

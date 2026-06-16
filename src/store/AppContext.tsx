@@ -8,7 +8,9 @@ import {
   FamilyContact,
   CommunicationRecord,
   BoardStepKey,
-  BoardStepStatus
+  BoardStepStatus,
+  CeremonyReview,
+  EulogyDraft
 } from '@/types';
 import { mockSchedules } from '@/data/schedule';
 import { mockSettlements } from '@/data/settlement';
@@ -38,6 +40,8 @@ interface AppState {
   religionFromSchedule: ReligionType | null;
   settlements: SettlementItem[];
   familyMap: Record<string, FamilyContact>;
+  reviewMap: Record<string, CeremonyReview>;
+  eulogyDraftMap: Record<string, EulogyDraft>;
 }
 
 interface AppContextType extends AppState {
@@ -59,16 +63,41 @@ interface AppContextType extends AppState {
     scheduleId: string,
     record: Omit<CommunicationRecord, 'id' | 'date'>
   ) => void;
+  addRequirement: (scheduleId: string, requirement: string) => void;
+  addRiskTag: (scheduleId: string, tag: string) => void;
+  removeRiskTag: (scheduleId: string, tag: string) => void;
   setCaseApplied: (title: string, highlights: string[]) => void;
   clearCaseApplied: () => void;
+  saveAppliedCaseToSchedule: (
+    scheduleId: string,
+    caseTitle: string,
+    highlights: string[],
+    flowSteps: CeremonyStep[]
+  ) => void;
+  getAppliedCaseFromSchedule: (scheduleId: string) => {
+    title: string | null;
+    highlights: string[] | null;
+    flowSteps: CeremonyStep[] | null;
+  } | null;
+  saveFlowStepsToSchedule: (scheduleId: string, steps: CeremonyStep[]) => void;
+  getFlowStepsFromSchedule: (scheduleId: string) => CeremonyStep[] | null;
+  saveReview: (scheduleId: string, data: Partial<CeremonyReview>) => CeremonyReview;
+  getReview: (scheduleId: string) => CeremonyReview | undefined;
+  setScheduleReviewStatus: (scheduleId: string, status: 'none' | 'doing' | 'done') => void;
+  saveEulogy: (scheduleId: string, title: string, content: string) => void;
+  getEulogy: (scheduleId: string) => EulogyDraft | undefined;
 }
 
-const STORAGE_KEY = 'funeral_app_state_v2';
+const STORAGE_KEY = 'funeral_app_state_v3';
 
 const initScheduleWithDefaults = (s: ScheduleItem): ScheduleItem => ({
   ...s,
   boardProgress: s.boardProgress || defaultBoardProgress(),
-  settlementStatus: s.settlementStatus || (s.status === 'completed' ? 'pending' : 'none')
+  settlementStatus: s.settlementStatus || (s.status === 'completed' ? 'pending' : 'none'),
+  reviewStatus: s.reviewStatus || 'none',
+  appliedCaseTitle: s.appliedCaseTitle ?? null,
+  appliedCaseHighlights: s.appliedCaseHighlights ?? null,
+  appliedFlowSteps: s.appliedFlowSteps ?? null
 });
 
 const defaultState: AppState = {
@@ -82,7 +111,9 @@ const defaultState: AppState = {
   familyMap: mockFamilyContacts.reduce((acc, f) => {
     if (f.scheduleId) acc[f.scheduleId] = f;
     return acc;
-  }, {} as Record<string, FamilyContact>)
+  }, {} as Record<string, FamilyContact>),
+  reviewMap: {},
+  eulogyDraftMap: {}
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -108,7 +139,9 @@ const persistState = (state: Partial<AppState>) => {
         caseAppliedHighlights: state.caseAppliedHighlights,
         caseAppliedTitle: state.caseAppliedTitle,
         settlements: state.settlements,
-        familyMap: state.familyMap
+        familyMap: state.familyMap,
+        reviewMap: state.reviewMap,
+        eulogyDraftMap: state.eulogyDraftMap
       })
     });
   } catch (e) {
@@ -162,7 +195,9 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     state.caseAppliedHighlights,
     state.caseAppliedTitle,
     state.settlements,
-    state.familyMap
+    state.familyMap,
+    state.reviewMap,
+    state.eulogyDraftMap
   ]);
 
   const addSchedule = (data: Partial<ScheduleItem>): ScheduleItem => {
@@ -201,7 +236,8 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
                 phone: data.familyPhone || '',
                 scheduleId: newItem.id,
                 communicationRecords: [],
-                requirements: data.notes ? [data.notes] : []
+                requirements: data.notes ? [data.notes] : [],
+                riskTags: []
               }
             }
           : prev.familyMap
@@ -375,7 +411,8 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
         phone: prev.schedules.find(s => s.id === scheduleId)?.familyPhone || '',
         scheduleId,
         communicationRecords: [],
-        requirements: []
+        requirements: [],
+        riskTags: []
       };
       const updated: FamilyContact = {
         ...base,
@@ -399,6 +436,53 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     });
   };
 
+  const addRequirement = (scheduleId: string, requirement: string) => {
+    setState(prev => {
+      const existing = prev.familyMap[scheduleId];
+      if (!existing) return prev;
+      const updated: FamilyContact = {
+        ...existing,
+        requirements: [...existing.requirements, requirement]
+      };
+      return {
+        ...prev,
+        familyMap: { ...prev.familyMap, [scheduleId]: updated }
+      };
+    });
+  };
+
+  const addRiskTag = (scheduleId: string, tag: string) => {
+    setState(prev => {
+      const existing = prev.familyMap[scheduleId];
+      if (!existing) return prev;
+      const current = existing.riskTags || [];
+      if (current.includes(tag)) return prev;
+      const updated: FamilyContact = {
+        ...existing,
+        riskTags: [...current, tag]
+      };
+      return {
+        ...prev,
+        familyMap: { ...prev.familyMap, [scheduleId]: updated }
+      };
+    });
+  };
+
+  const removeRiskTag = (scheduleId: string, tag: string) => {
+    setState(prev => {
+      const existing = prev.familyMap[scheduleId];
+      if (!existing) return prev;
+      const updated: FamilyContact = {
+        ...existing,
+        riskTags: (existing.riskTags || []).filter(t => t !== tag)
+      };
+      return {
+        ...prev,
+        familyMap: { ...prev.familyMap, [scheduleId]: updated }
+      };
+    });
+  };
+
   const setCaseApplied = (title: string, highlights: string[]) => {
     setState(prev => ({
       ...prev,
@@ -413,6 +497,118 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       caseAppliedTitle: null,
       caseAppliedHighlights: null
     }));
+  };
+
+  const saveAppliedCaseToSchedule = (
+    scheduleId: string,
+    caseTitle: string,
+    highlights: string[],
+    flowSteps: CeremonyStep[]
+  ) => {
+    setState(prev => ({
+      ...prev,
+      schedules: prev.schedules.map(s =>
+        s.id === scheduleId
+          ? {
+              ...s,
+              appliedCaseTitle: caseTitle,
+              appliedCaseHighlights: highlights,
+              appliedFlowSteps: flowSteps
+            }
+          : s
+      )
+    }));
+  };
+
+  const getAppliedCaseFromSchedule = (scheduleId: string) => {
+    const s = state.schedules.find(x => x.id === scheduleId);
+    if (!s) return null;
+    return {
+      title: s.appliedCaseTitle || null,
+      highlights: s.appliedCaseHighlights || null,
+      flowSteps: s.appliedFlowSteps || null
+    };
+  };
+
+  const saveFlowStepsToSchedule = (scheduleId: string, steps: CeremonyStep[]) => {
+    setState(prev => ({
+      ...prev,
+      schedules: prev.schedules.map(s =>
+        s.id === scheduleId ? { ...s, appliedFlowSteps: steps } : s
+      )
+    }));
+  };
+
+  const getFlowStepsFromSchedule = (scheduleId: string) => {
+    const s = state.schedules.find(x => x.id === scheduleId);
+    return s?.appliedFlowSteps || null;
+  };
+
+  const saveReview = (scheduleId: string, data: Partial<CeremonyReview>): CeremonyReview => {
+    const now = new Date().toISOString();
+    setState(prev => {
+      const existing = prev.reviewMap[scheduleId];
+      const newReview: CeremonyReview = {
+        id: existing?.id || 'rv_' + Date.now().toString(36),
+        scheduleId,
+        scenePhotos: data.scenePhotos ?? existing?.scenePhotos ?? [],
+        emergencyHandling: data.emergencyHandling ?? existing?.emergencyHandling ?? '',
+        familyFeedback: data.familyFeedback ?? existing?.familyFeedback ?? '',
+        todos: data.todos ?? existing?.todos ?? [],
+        overallNote: data.overallNote ?? existing?.overallNote,
+        createdAt: existing?.createdAt || now,
+        updatedAt: now
+      };
+      return {
+        ...prev,
+        reviewMap: { ...prev.reviewMap, [scheduleId]: newReview },
+        schedules: prev.schedules.map(s =>
+          s.id === scheduleId ? { ...s, reviewStatus: 'doing' } : s
+        )
+      };
+    });
+    return (
+      state.reviewMap[scheduleId] || {
+        id: 'rv_' + Date.now().toString(36),
+        scheduleId,
+        scenePhotos: [],
+        emergencyHandling: '',
+        familyFeedback: '',
+        todos: [],
+        createdAt: now,
+        updatedAt: now
+      }
+    );
+  };
+
+  const getReview = (scheduleId: string) => {
+    return state.reviewMap[scheduleId];
+  };
+
+  const setScheduleReviewStatus = (
+    scheduleId: string,
+    status: 'none' | 'doing' | 'done'
+  ) => {
+    setState(prev => ({
+      ...prev,
+      schedules: prev.schedules.map(s =>
+        s.id === scheduleId ? { ...s, reviewStatus: status } : s
+      )
+    }));
+  };
+
+  const saveEulogy = (scheduleId: string, title: string, content: string) => {
+    setState(prev => ({
+      ...prev,
+      eulogyDraftMap: {
+        ...prev.eulogyDraftMap,
+        [scheduleId]: { scheduleId, title, content }
+      }
+    }));
+  };
+
+  const getEulogy = (scheduleId: string) => {
+    return state.eulogyDraftMap[scheduleId];
   };
 
   const value: AppContextType = {
@@ -432,8 +628,20 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     applySettlementPaid,
     getFamilyForSchedule,
     addCommunicationRecord,
+    addRequirement,
+    addRiskTag,
+    removeRiskTag,
     setCaseApplied,
-    clearCaseApplied
+    clearCaseApplied,
+    saveAppliedCaseToSchedule,
+    getAppliedCaseFromSchedule,
+    saveFlowStepsToSchedule,
+    getFlowStepsFromSchedule,
+    saveReview,
+    getReview,
+    setScheduleReviewStatus,
+    saveEulogy,
+    getEulogy
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -460,8 +668,20 @@ export const useAppStore = (): AppContextType => {
       applySettlementPaid: () => {},
       getFamilyForSchedule: () => undefined,
       addCommunicationRecord: () => {},
+      addRequirement: () => {},
+      addRiskTag: () => {},
+      removeRiskTag: () => {},
       setCaseApplied: () => {},
-      clearCaseApplied: () => {}
+      clearCaseApplied: () => {},
+      saveAppliedCaseToSchedule: () => {},
+      getAppliedCaseFromSchedule: () => null,
+      saveFlowStepsToSchedule: () => {},
+      getFlowStepsFromSchedule: () => null,
+      saveReview: () => ({ id: 'temp', scheduleId: 'temp', scenePhotos: [], emergencyHandling: '', familyFeedback: '', todos: [], createdAt: '', updatedAt: '' }),
+      getReview: () => undefined,
+      setScheduleReviewStatus: () => {},
+      saveEulogy: () => {},
+      getEulogy: () => undefined
     };
   }
   return ctx;

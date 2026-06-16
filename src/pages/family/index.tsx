@@ -8,13 +8,18 @@ import { FamilyContact, CommunicationRecord } from '@/types';
 import { getCommunicationTypeText } from '@/utils';
 import { useAppStore } from '@/store/AppContext';
 
+const presetRiskTags = ['情绪敏感', '长辈在场', '宗教禁忌', '儿童在场', '媒体采访', '外宾参与', '需特殊照顾', '需提前彩排'];
+
 const FamilyPage: React.FC = () => {
   const {
     currentScheduleId,
     getFamilyForSchedule,
     getCurrentSchedule,
     addCommunicationRecord,
-    familyMap
+    familyMap,
+    addRequirement,
+    addRiskTag,
+    removeRiskTag
   } = useAppStore();
 
   const [activeFamilyId, setActiveFamilyId] = useState<string>('');
@@ -23,6 +28,10 @@ const FamilyPage: React.FC = () => {
   const [newRecordType, setNewRecordType] = useState<'call' | 'message' | 'meeting'>('call');
   const [showAddForm, setShowAddForm] = useState(false);
   const [scheduleName, setScheduleName] = useState<string>('');
+  const [newRequirement, setNewRequirement] = useState('');
+  const [showAddReq, setShowAddReq] = useState(false);
+  const [showAddRisk, setShowAddRisk] = useState(false);
+  const [newRiskInput, setNewRiskInput] = useState('');
 
   useDidShow(() => {
     console.log('[FamilyPage] 页面显示, currentScheduleId:', currentScheduleId);
@@ -107,6 +116,54 @@ const FamilyPage: React.FC = () => {
     Taro.showToast({ title: '记录已保存', icon: 'success' });
   };
 
+  const handleAddRequirement = () => {
+    if (!newRequirement.trim()) {
+      Taro.showToast({ title: '请输入需求内容', icon: 'none' });
+      return;
+    }
+    const sid = currentScheduleId || activeFamily?.scheduleId;
+    if (!sid) {
+      Taro.showToast({ title: '请先关联档期', icon: 'none' });
+      return;
+    }
+    addRequirement(sid, newRequirement.trim());
+    setNewRequirement('');
+    setShowAddReq(false);
+    Taro.showToast({ title: '需求已添加', icon: 'success' });
+  };
+
+  const handleAddRiskTag = (tag?: string) => {
+    const useTag = tag || newRiskInput.trim();
+    if (!useTag) {
+      Taro.showToast({ title: '请输入标签内容', icon: 'none' });
+      return;
+    }
+    const sid = currentScheduleId || activeFamily?.scheduleId;
+    if (!sid) {
+      Taro.showToast({ title: '请先关联档期', icon: 'none' });
+      return;
+    }
+    addRiskTag(sid, useTag);
+    setNewRiskInput('');
+    setShowAddRisk(false);
+    Taro.showToast({ title: '风险标签已添加', icon: 'success' });
+  };
+
+  const handleRemoveRisk = (tag: string) => {
+    const sid = currentScheduleId || activeFamily?.scheduleId;
+    if (!sid) return;
+    Taro.showModal({
+      title: '移除风险标签',
+      content: `确认移除「${tag}」标签吗？`,
+      success: (res) => {
+        if (res.confirm) {
+          removeRiskTag(sid, tag);
+          Taro.showToast({ title: '已移除', icon: 'none' });
+        }
+      }
+    });
+  };
+
   return (
     <View className={styles.container}>
       {scheduleName && (
@@ -178,7 +235,140 @@ const FamilyPage: React.FC = () => {
           </View>
 
           <View className={styles.card}>
-            <SectionHeader title="家属需求清单" subtitle={`共${activeFamily.requirements.length}项需求`} />
+            <SectionHeader
+              title="风险提醒标签"
+              subtitle={`共${(activeFamily.riskTags || []).length}项 · 追思流程页会显示`}
+              extra={
+                <Text
+                  style={{ color: '#C53030', fontSize: 24 }}
+                  onClick={() => setShowAddRisk(!showAddRisk)}
+                >
+                  {showAddRisk ? '收起' : '添加 +'}
+                </Text>
+              }
+            />
+            {showAddRisk && (
+              <View style={{ padding: 16, background: '#FFF5F5', borderRadius: 12, marginBottom: 16 }}>
+                <Text style={{ fontSize: 24, color: '#C53030', marginBottom: 12 }}>快捷选择：</Text>
+                <View style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+                  {presetRiskTags.filter(t => !(activeFamily.riskTags || []).includes(t)).map((t, i) => (
+                    <Text
+                      key={i}
+                      style={{
+                        padding: '8rpx 20rpx',
+                        borderRadius: 8,
+                        background: '#FED7D7',
+                        color: '#C53030',
+                        fontSize: 24
+                      }}
+                      onClick={() => handleAddRiskTag(t)}
+                    >
+                      + {t}
+                    </Text>
+                  ))}
+                </View>
+                <Input
+                  style={{
+                    padding: 12,
+                    background: '#fff',
+                    borderRadius: 8,
+                    border: '2rpx solid #FED7D7',
+                    fontSize: 26,
+                    marginBottom: 12
+                  }}
+                  placeholder="自定义风险标签..."
+                  value={newRiskInput}
+                  onInput={e => setNewRiskInput(e.detail.value)}
+                />
+                <View
+                  style={{
+                    padding: 12,
+                    textAlign: 'center',
+                    background: '#C53030',
+                    color: '#fff',
+                    borderRadius: 8,
+                    fontSize: 26,
+                    fontWeight: 600
+                  }}
+                  onClick={() => handleAddRiskTag()}
+                >
+                  ✓ 保存为风险标签
+                </View>
+              </View>
+            )}
+            {(activeFamily.riskTags || []).length > 0 ? (
+              <View style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                {(activeFamily.riskTags || []).map((t, i) => (
+                  <View
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '8rpx 8rpx 8rpx 20rpx',
+                      borderRadius: 8,
+                      background: '#FFF5F5',
+                      border: '2rpx solid #FED7D7'
+                    }}
+                  >
+                    <Text style={{ fontSize: 24, color: '#C53030', fontWeight: 600 }}>⚠️ {t}</Text>
+                    <Text
+                      style={{ fontSize: 24, color: '#C53030', marginLeft: 8, padding: '0 8rpx' }}
+                      onClick={() => handleRemoveRisk(t)}
+                    >
+                      ✕
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Text style={{ fontSize: 24, color: '#A0AEC0', padding: 16 }}>暂无风险提醒，可点击右上角添加</Text>
+            )}
+          </View>
+
+          <View className={styles.card}>
+            <SectionHeader
+              title="家属需求清单"
+              subtitle={`共${activeFamily.requirements.length}项需求`}
+              extra={
+                <Text
+                  style={{ color: '#2C5282', fontSize: 24 }}
+                  onClick={() => setShowAddReq(!showAddReq)}
+                >
+                  {showAddReq ? '收起' : '添加 +'}
+                </Text>
+              }
+            />
+            {showAddReq && (
+              <View style={{ padding: 16, background: '#F7FAFC', borderRadius: 12, marginBottom: 16 }}>
+                <Input
+                  style={{
+                    padding: 12,
+                    background: '#fff',
+                    borderRadius: 8,
+                    border: '2rpx solid #E2E8F0',
+                    fontSize: 26,
+                    marginBottom: 12
+                  }}
+                  placeholder="请输入家属需求，如：播放视频、请某位发言等"
+                  value={newRequirement}
+                  onInput={e => setNewRequirement(e.detail.value)}
+                />
+                <View
+                  style={{
+                    padding: 12,
+                    textAlign: 'center',
+                    background: '#2C5282',
+                    color: '#fff',
+                    borderRadius: 8,
+                    fontSize: 26,
+                    fontWeight: 600
+                  }}
+                  onClick={handleAddRequirement}
+                >
+                  ✓ 保存家属需求
+                </View>
+              </View>
+            )}
             <View className={styles.requirementsList}>
               {activeFamily.requirements.map((req, idx) => (
                 <View key={idx} className={styles.reqItem}>

@@ -15,7 +15,9 @@ const SettlementPage: React.FC = () => {
     getCurrentSchedule,
     applySettlementPaid,
     addOrUpdateSettlement,
-    advanceBoardStep
+    advanceBoardStep,
+    setCurrentScheduleId,
+    getReview
   } = useAppStore();
   const [activeTab, setActiveTab] = useState<string>('settle');
   const [settleFilter, setSettleFilter] = useState<string>('all');
@@ -327,6 +329,50 @@ const SettlementPage: React.FC = () => {
                   )}
                 </View>
               ))}
+            </View>
+          </View>
+
+          <View className={styles.card}>
+            <SectionHeader title="服务交付" subtitle="复盘记录与交付清单" />
+            <View style={{ display: 'flex', flexDirection: 'row', gap: 16, marginTop: 16 }}>
+              <View
+                style={{
+                  flex: 1,
+                  padding: 24,
+                  background: '#FFFBEB',
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderStyle: 'solid',
+                  borderColor: '#FEEBC8'
+                }}
+                onClick={() => {
+                  const s = getCurrentSchedule(); if (s) { setCurrentScheduleId(s.id); }
+                  Taro.navigateTo({ url: '/pages/review/index' });
+                }}
+              >
+                <Text style={{ fontSize: 32, marginBottom: 8 }}>📊</Text>
+                <Text style={{ fontSize: 26, color: '#92400E', fontWeight: '600' }}>服务复盘</Text>
+                <Text style={{ fontSize: 22, color: '#B7791F', marginTop: 4 }}>突发情况、家属反馈</Text>
+              </View>
+              <View
+                style={{
+                  flex: 1,
+                  padding: 24,
+                  background: '#EBF8FF',
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderStyle: 'solid',
+                  borderColor: '#BEE3F8'
+                }}
+                onClick={() => {
+                  const s = getCurrentSchedule(); if (s) { setCurrentScheduleId(s.id); }
+                  Taro.navigateTo({ url: '/pages/delivery/index' });
+                }}
+              >
+                <Text style={{ fontSize: 32, marginBottom: 8 }}>📦</Text>
+                <Text style={{ fontSize: 26, color: '#2A4365', fontWeight: '600' }}>交付清单</Text>
+                <Text style={{ fontSize: 22, color: '#2C5282', marginTop: 4 }}>悼词/流程/沟通汇总</Text>
+              </View>
             </View>
           </View>
         </>

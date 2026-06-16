@@ -1,0 +1,192 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background: #F7FAFC;
+  padding: 24rpx;
+  padding-bottom: 160rpx;
+}
+
+.scheduleHeader {
+  background: linear-gradient(135deg, $color-primary 0%, #2B6CB0 100%);
+  border-radius: 16rpx;
+  padding: 32rpx 24rpx;
+  margin: 0 -8rpx 24rpx -8rpx;
+  color: #FFFFFF;
+}
+
+.scheduleLabel {
+  font-size: 24rpx;
+  opacity: 0.85;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.scheduleName {
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.card {
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.photoList {
+  margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.photoEmpty {
+  padding: 40rpx 20rpx;
+  text-align: center;
+  background: #F7FAFC;
+  border-radius: 12rpx;
+  border: 2rpx dashed #E2E8F0;
+}
+
+.photoItem {
+  display: flex;
+  align-items: center;
+  padding: 16rpx;
+  background: #F7FAFC;
+  border-radius: 12rpx;
+}
+
+.photoPlaceholder {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 12rpx;
+  background: #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.photoNote {
+  flex: 1;
+  font-size: 26rpx;
+  color: #4A5568;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 200rpx;
+  padding: 20rpx;
+  background: #F7FAFC;
+  border-radius: 12rpx;
+  border: 2rpx solid #E2E8F0;
+  font-size: 26rpx;
+  color: #2D3748;
+  line-height: 1.6;
+  margin-top: 16rpx;
+  box-sizing: border-box;
+}
+
+.todoInputRow {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.todoInput {
+  flex: 1;
+  padding: 20rpx;
+  background: #F7FAFC;
+  border-radius: 12rpx;
+  border: 2rpx solid #E2E8F0;
+  font-size: 26rpx;
+  color: #2D3748;
+}
+
+.todoAddBtn {
+  padding: 20rpx 32rpx;
+  background: $color-primary;
+  color: #FFFFFF;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.todoList {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.todoItem {
+  display: flex;
+  align-items: flex-start;
+  padding: 20rpx;
+  background: #F7FAFC;
+  border-radius: 12rpx;
+  border: 2rpx solid #E2E8F0;
+  transition: all 0.3s;
+
+  &.done {
+    background: rgba(56, 161, 105, 0.05);
+    border-color: rgba(56, 161, 105, 0.2);
+  }
+}
+
+.todoCheck {
+  font-size: 32rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+
+.todoText {
+  flex: 1;
+  font-size: 26rpx;
+  color: #2D3748;
+  line-height: 1.5;
+}
+
+.bottomBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #FFFFFF;
+  padding: 20rpx 24rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 16rpx;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
+  z-index: 100;
+}
+
+.bottomBtn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  transition: all 0.3s;
+
+  &.primary {
+    background: $color-primary;
+    color: #FFFFFF;
+  }
+
+  &.secondary {
+    background: #EDF2F7;
+    color: $color-primary;
+    border: 2rpx solid $color-primary;
+  }
+}

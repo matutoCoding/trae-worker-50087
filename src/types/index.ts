@@ -32,6 +32,10 @@ export interface ScheduleItem {
   amount?: number;
   boardProgress?: Record<BoardStepKey, BoardStepStatus>;
   settlementStatus?: 'none' | 'pending' | 'paid';
+  reviewStatus?: 'none' | 'doing' | 'done';
+  appliedCaseTitle?: string | null;
+  appliedCaseHighlights?: string[] | null;
+  appliedFlowSteps?: CeremonyStep[] | null;
 }
 
 export interface CeremonyStep {
@@ -70,6 +74,7 @@ export interface FamilyContact {
   scheduleId?: string;
   communicationRecords: CommunicationRecord[];
   requirements: string[];
+  riskTags?: string[];
 }
 
 export interface CommunicationRecord {
@@ -138,4 +143,31 @@ export interface ReligionConfig {
   customs: string[];
   taboos: string[];
   musicRecommendations: string[];
+}
+
+export interface CeremonyReview {
+  id: string;
+  scheduleId: string;
+  scenePhotos: { id: string; url: string; note: string }[];
+  emergencyHandling: string;
+  familyFeedback: string;
+  todos: { id: string; content: string; done: boolean }[];
+  overallNote?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeliveryChecklistItem {
+  key: 'eulogy' | 'flow' | 'music' | 'communication' | 'review' | 'settlement';
+  label: string;
+  icon: string;
+  status: 'done' | 'doing' | 'missing';
+  description: string;
+}
+
+export interface EulogyDraft {
+  id?: string;
+  scheduleId: string;
+  title: string;
+  content: string;
 }
