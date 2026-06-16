@@ -33,7 +33,12 @@ const CeremonyPage: React.FC = () => {
     getCurrentSchedule,
     religionFromSchedule,
     casePlanData,
-    clearCasePlan
+    clearCasePlan,
+    caseAppliedHighlights,
+    caseAppliedTitle,
+    setCaseApplied,
+    advanceBoardStep,
+    currentScheduleId
   } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<TabType>('flow');
@@ -45,7 +50,7 @@ const CeremonyPage: React.FC = () => {
     { id: '2', time: '09:45', content: '音响设备出现短暂故障，已切换备用设备，仪式延后2分钟。' }
   ]);
   const [recordInput, setRecordInput] = useState('');
-  const [caseApplied, setCaseApplied] = useState(false);
+  const [caseAppliedFlag, setCaseAppliedFlag] = useState(false);
 
   // ============================================
   // 根据档期/宗教自动切换流程模板
@@ -60,9 +65,7 @@ const CeremonyPage: React.FC = () => {
   // ============================================
   const applyCasePlan = () => {
     if (!casePlanData) return;
-    // 使用案例的宗教作为基础
     const baseSteps = mockCeremonySteps[casePlanData.religion] || [];
-    // 将案例的流程亮点整合到步骤描述中
     const mergedSteps = baseSteps.map((step, idx) => ({
       ...step,
       description: idx < casePlanData.flow.length
@@ -71,7 +74,11 @@ const CeremonyPage: React.FC = () => {
     }));
     setSteps(mergedSteps);
     setCurrentReligion(casePlanData.religion);
-    setCaseApplied(true);
+    setCaseAppliedFlag(true);
+    setCaseApplied(casePlanData.caseTitle, casePlanData.highlights);
+    if (currentScheduleId) {
+      advanceBoardStep(currentScheduleId, 'flow_confirmed');
+    }
     Taro.showToast({ title: `已套用：${casePlanData.caseTitle}`, icon: 'success' });
     clearCasePlan();
   };
@@ -83,7 +90,7 @@ const CeremonyPage: React.FC = () => {
     console.log('[CeremonyPage] 案例方案:', casePlanData);
 
     // 优先级1：如果有案例套用数据，优先处理
-    if (casePlanData && !caseApplied) {
+    if (casePlanData && !caseAppliedFlag) {
       Taro.showModal({
         title: '📋 套用案例方案',
         content: `检测到优秀案例「${casePlanData.caseTitle}」\n是否将其流程和亮点应用到当前仪式？`,
@@ -127,7 +134,7 @@ const CeremonyPage: React.FC = () => {
         if (res.confirm) {
           setCurrentReligion(religion);
           initStepsByReligion(religion);
-          setCaseApplied(false);
+          setCaseAppliedFlag(false);
         }
       }
     });
@@ -214,11 +221,46 @@ const CeremonyPage: React.FC = () => {
 
   const renderFlow = () => (
     <View>
+      {/* 案例执行提示（持久化亮点） */}
+      {(caseAppliedFlag || (caseAppliedHighlights && caseAppliedHighlights.length > 0)) && (
+        <View className={styles.card} style={{ border: '2rpx solid #D69E2E', background: '#FFFBEB' }}>
+          <SectionHeader
+            title={`✨ ${caseAppliedTitle || '案例执行提示'}`}
+            extra={
+              <Text style={{ color: '#D69E2E', fontSize: 22 }}>
+                {caseAppliedHighlights ? `${caseAppliedHighlights.length}条亮点` : '参考执行'}
+              </Text>
+            }
+          />
+          <Text style={{ fontSize: 24, color: '#92400E', marginTop: 8, display: 'block' }}>
+            套用优秀案例的执行建议，作为本次仪式的参考要点
+          </Text>
+          <View style={{ marginTop: 16 }}>
+            {(caseAppliedHighlights || []).map((h, idx) => (
+              <View
+                key={idx}
+                style={{
+                  display: 'flex',
+                  padding: '16rpx 0',
+                  alignItems: 'flex-start',
+                  borderBottom: idx !== (caseAppliedHighlights?.length || 0) - 1 ? '2rpx solid #FAF089' : 'none'
+                }}
+              >
+                <Text style={{ color: '#D69E2E', marginRight: 12, fontWeight: 600 }}>
+                  ✨{idx + 1}.
+                </Text>
+                <Text style={{ fontSize: 26, color: '#744210', flex: 1, lineHeight: 1.6 }}>{h}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
       {/* 宗教切换栏 */}
       <View className={styles.card}>
         <SectionHeader
           title="仪式模板"
-          extra={caseApplied ? <Text style={{ color: '#D69E2E', fontSize: 22 }}>✨ 已套用案例</Text> : undefined}
+          extra={caseAppliedFlag ? <Text style={{ color: '#D69E2E', fontSize: 22 }}>✨ 已套用案例</Text> : undefined}
         />
         <Text style={{ fontSize: 24, color: '#718096', display: 'block', marginBottom: 16 }}>
           {currentSchedule
@@ -459,7 +501,7 @@ const CeremonyPage: React.FC = () => {
       <View className={styles.currentSchedule}>
         <Text className={styles.currentTitle}>
           🕯 当前仪式 · {getReligionText(currentReligion)}
-          {caseApplied && <Text style={{ marginLeft: 8 }}>✨</Text>}
+          {caseAppliedFlag && <Text style={{ marginLeft: 8 }}>✨</Text>}
         </Text>
         {currentSchedule ? (
           <>

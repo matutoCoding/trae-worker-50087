@@ -1,24 +1,63 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text } from '@tarojs/components';
+import { View, Text, Input } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import classnames from 'classnames';
 import SectionHeader from '@/components/SectionHeader';
-import { mockFamilyContacts } from '@/data/family';
 import { FamilyContact, CommunicationRecord } from '@/types';
 import { getCommunicationTypeText } from '@/utils';
+import { useAppStore } from '@/store/AppContext';
 
 const FamilyPage: React.FC = () => {
-  const [activeFamilyId, setActiveFamilyId] = useState<string>(mockFamilyContacts[0].id);
+  const {
+    currentScheduleId,
+    getFamilyForSchedule,
+    getCurrentSchedule,
+    addCommunicationRecord,
+    familyMap
+  } = useAppStore();
+
+  const [activeFamilyId, setActiveFamilyId] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('all');
+  const [newRecordContent, setNewRecordContent] = useState('');
+  const [newRecordType, setNewRecordType] = useState<'call' | 'message' | 'meeting'>('call');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [scheduleName, setScheduleName] = useState<string>('');
 
   useDidShow(() => {
-    console.log('[FamilyPage] 页面显示');
+    console.log('[FamilyPage] 页面显示, currentScheduleId:', currentScheduleId);
+    const schedule = getCurrentSchedule();
+    if (schedule) {
+      setScheduleName(`${schedule.deceasedName}${schedule.gender === 'male' ? '先生' : '女士'} · ${schedule.ceremonyType}`);
+    } else {
+      setScheduleName('');
+    }
+    if (currentScheduleId) {
+      const fam = getFamilyForSchedule(currentScheduleId);
+      if (fam) {
+        setActiveFamilyId(fam.id);
+      }
+    }
   });
 
+  const allFamilies = useMemo((): FamilyContact[] => {
+    const fromStore = Object.values(familyMap);
+    if (currentScheduleId) {
+      const current = fromStore.find(f => f.scheduleId === currentScheduleId);
+      if (current) return [current];
+      const fallback = getFamilyForSchedule(currentScheduleId);
+      return fallback ? [fallback] : fromStore;
+    }
+    return fromStore;
+  }, [familyMap, currentScheduleId]);
+
   const activeFamily = useMemo((): FamilyContact | undefined => {
-    return mockFamilyContacts.find(f => f.id === activeFamilyId);
-  }, [activeFamilyId]);
+    if (activeFamilyId) {
+      const found = allFamilies.find(f => f.id === activeFamilyId);
+      if (found) return found;
+    }
+    return allFamilies[0];
+  }, [activeFamilyId, allFamilies]);
 
   const filteredRecords = useMemo((): CommunicationRecord[] => {
     if (!activeFamily) return [];
@@ -49,15 +88,53 @@ const FamilyPage: React.FC = () => {
     { id: 3, text: '确认僧人到场时间', time: '2026-06-17 20:00', done: false }
   ];
 
+  const handleAddRecord = () => {
+    if (!newRecordContent.trim()) {
+      Taro.showToast({ title: '请输入沟通内容', icon: 'none' });
+      return;
+    }
+    const sid = currentScheduleId || activeFamily?.scheduleId;
+    if (!sid) {
+      Taro.showToast({ title: '请先关联档期', icon: 'none' });
+      return;
+    }
+    addCommunicationRecord(sid, {
+      type: newRecordType,
+      content: newRecordContent.trim()
+    });
+    setNewRecordContent('');
+    setShowAddForm(false);
+    Taro.showToast({ title: '记录已保存', icon: 'success' });
+  };
+
   return (
     <View className={styles.container}>
+      {scheduleName && (
+        <View
+          style={{
+            background: 'linear-gradient(135deg, #2C5282 0%, #2B6CB0 100%)',
+            padding: 20,
+            margin: '0 -32rpx 24rpx -32rpx',
+            color: '#fff'
+          }}
+        >
+          <Text style={{ fontSize: 22, opacity: 0.9 }}>📌 当前关联档期</Text>
+          <Text style={{ fontSize: 30, fontWeight: 600, display: 'block', marginTop: 8 }}>
+            {scheduleName}
+          </Text>
+        </View>
+      )}
+
       <View className={styles.familySelector}>
-        <SectionHeader title="家属选择" subtitle="切换查看不同家属沟通记录" />
+        <SectionHeader
+          title={currentScheduleId ? '本场家属联系人' : '家属选择'}
+          subtitle={currentScheduleId ? '当前档期关联的家属' : '切换查看不同家属沟通记录'}
+        />
         <View className={styles.familyList}>
-          {mockFamilyContacts.map(family => (
+          {allFamilies.map(family => (
             <View
               key={family.id}
-              className={classnames(styles.familyItem, activeFamilyId === family.id && styles.active)}
+              className={classnames(styles.familyItem, (!activeFamilyId || activeFamilyId === family.id) && styles.active)}
               onClick={() => setActiveFamilyId(family.id)}
             >
               <View className={styles.familyAvatar}>
@@ -109,11 +186,78 @@ const FamilyPage: React.FC = () => {
                   <Text className={styles.reqText}>{req}</Text>
                 </View>
               ))}
+              {activeFamily.requirements.length === 0 && (
+                <Text style={{ fontSize: 24, color: '#A0AEC0', padding: 16 }}>暂无家属需求，沟通后可添加</Text>
+              )}
             </View>
           </View>
 
           <View className={styles.card}>
-            <SectionHeader title="沟通记录" extra={<Text style={{ color: '#2C5282', fontSize: 24 }}>添加 +</Text>} />
+            <SectionHeader
+              title="沟通记录"
+              extra={
+                <Text
+                  style={{ color: '#2C5282', fontSize: 24 }}
+                  onClick={() => setShowAddForm(!showAddForm)}
+                >
+                  {showAddForm ? '收起' : '添加 +'}
+                </Text>
+              }
+            />
+            {showAddForm && (
+              <View style={{ padding: 16, background: '#F7FAFC', borderRadius: 12, marginBottom: 16 }}>
+                <Text style={{ fontSize: 24, color: '#4A5568', marginBottom: 12 }}>沟通类型：</Text>
+                <View style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+                  {[
+                    { key: 'call', label: '📞 电话' },
+                    { key: 'message', label: '💬 消息' },
+                    { key: 'meeting', label: '🤝 面谈' }
+                  ].map(t => (
+                    <View
+                      key={t.key}
+                      style={{
+                        padding: '12rpx 24rpx',
+                        borderRadius: 8,
+                        background: newRecordType === t.key ? '#2C5282' : '#EDF2F7',
+                        color: newRecordType === t.key ? '#fff' : '#4A5568',
+                        fontSize: 24
+                      }}
+                      onClick={() => setNewRecordType(t.key as any)}
+                    >
+                      {t.label}
+                    </View>
+                  ))}
+                </View>
+                <Text style={{ fontSize: 24, color: '#4A5568', marginBottom: 12 }}>沟通内容：</Text>
+                <Input
+                  style={{
+                    padding: 16,
+                    background: '#fff',
+                    borderRadius: 8,
+                    fontSize: 26,
+                    border: '2rpx solid #E2E8F0'
+                  }}
+                  placeholder="请输入本次沟通的内容..."
+                  value={newRecordContent}
+                  onInput={e => setNewRecordContent(e.detail.value)}
+                />
+                <View
+                  style={{
+                    marginTop: 16,
+                    padding: 16,
+                    textAlign: 'center',
+                    background: '#2C5282',
+                    color: '#fff',
+                    borderRadius: 8,
+                    fontSize: 26,
+                    fontWeight: 600
+                  }}
+                  onClick={handleAddRecord}
+                >
+                  ✓ 保存沟通记录
+                </View>
+              </View>
+            )}
             <View className={styles.filterTabs}>
               {typeFilters.map(f => (
                 <View
@@ -143,6 +287,11 @@ const FamilyPage: React.FC = () => {
                   </View>
                 </View>
               ))}
+              {filteredRecords.length === 0 && (
+                <Text style={{ fontSize: 24, color: '#A0AEC0', padding: 16, textAlign: 'center' }}>
+                  暂无沟通记录，点击上方「添加」开始记录
+                </Text>
+              )}
             </View>
           </View>
 
@@ -169,13 +318,19 @@ const FamilyPage: React.FC = () => {
       <View className={styles.bottomBar}>
         <View
           className={classnames(styles.bottomBtn, styles.warm)}
-          onClick={() => Taro.showToast({ title: '拨打电话', icon: 'none' })}
+          onClick={() => {
+            if (activeFamily) {
+              Taro.makePhoneCall({ phoneNumber: activeFamily.phone.replace(/\*/g, '0') });
+            } else {
+              Taro.showToast({ title: '请先选择家属', icon: 'none' });
+            }
+          }}
         >
           📞 联系家属
         </View>
         <View
           className={classnames(styles.bottomBtn, styles.primary)}
-          onClick={() => Taro.showToast({ title: '新增记录', icon: 'none' })}
+          onClick={() => setShowAddForm(true)}
         >
           ✏️ 记录沟通
         </View>

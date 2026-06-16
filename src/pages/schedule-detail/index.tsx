@@ -5,10 +5,27 @@ import styles from './index.module.scss';
 import classnames from 'classnames';
 import StatusBadge from '@/components/StatusBadge';
 import SectionHeader from '@/components/SectionHeader';
-import { ScheduleItem } from '@/types';
+import { ScheduleItem, BoardStepKey, BoardStepStatus } from '@/types';
 import { useAppStore } from '@/store/AppContext';
-import { getFamilyByScheduleId } from '@/data/family';
 import { formatDateCN, getWeekDay, getReligionText, formatMoney } from '@/utils';
+
+interface BoardStep {
+  key: BoardStepKey;
+  label: string;
+  icon: string;
+  description: string;
+  path?: string;
+  isTab?: boolean;
+}
+
+const boardSteps: BoardStep[] = [
+  { key: 'booked', label: '预约已确认', icon: '📋', description: '档期已预约' },
+  { key: 'communicate', label: '家属沟通', icon: '💬', description: '已完成首次沟通', path: '/pages/family/index' },
+  { key: 'flow_confirmed', label: '流程确认', icon: '⚙️', description: '仪式流程已确认', path: '/pages/ceremony/index', isTab: true },
+  { key: 'ceremony_start', label: '仪式开始', icon: '▶️', description: '仪式已开始' },
+  { key: 'ceremony_complete', label: '仪式完成', icon: '✅', description: '仪式已圆满完成' },
+  { key: 'settled', label: '服务结算', icon: '💰', description: '费用已结算', path: '/pages/settlement/index' }
+];
 
 const ScheduleDetailPage: React.FC = () => {
   const router = useRouter();
@@ -17,17 +34,42 @@ const ScheduleDetailPage: React.FC = () => {
     schedules,
     updateScheduleStatus,
     setCurrentScheduleId,
-    setReligionFromSchedule
+    setReligionFromSchedule,
+    advanceBoardStep,
+    addOrUpdateSettlement,
+    getFamilyForSchedule,
+    getSettlementByScheduleId
   } = useAppStore();
   const [schedule, setSchedule] = useState<ScheduleItem | null>(null);
+  const [settleSummary, setSettleSummary] = useState<{ text: string; color: string } | null>(null);
+  const [familySummary, setFamilySummary] = useState<{ records: number; latest?: string } | null>(null);
 
   const refreshSchedule = () => {
     const data = schedules.find(s => s.id === id);
     if (data) {
       setSchedule(data);
-      // 自动设置当前档期，供追思流程页使用
       setCurrentScheduleId(data.id);
       setReligionFromSchedule(data.religion);
+      const settle = getSettlementByScheduleId(data.id);
+      if (settle) {
+        setSettleSummary({
+          text: settle.status === 'paid' ? '✓ 已结算' : '⏳ 待结算',
+          color: settle.status === 'paid' ? '#38A169' : '#D69E2E'
+        });
+      } else if (data.status === 'completed') {
+        setSettleSummary({ text: '待申请结算', color: '#E53E3E' });
+      } else {
+        setSettleSummary(null);
+      }
+      const family = getFamilyForSchedule(data.id);
+      if (family) {
+        setFamilySummary({
+          records: family.communicationRecords.length,
+          latest: family.communicationRecords[0]?.content
+        });
+      } else {
+        setFamilySummary({ records: 0 });
+      }
     } else {
       Taro.showToast({ title: '档期不存在', icon: 'error' });
     }
@@ -40,10 +82,10 @@ const ScheduleDetailPage: React.FC = () => {
 
   if (!schedule) return null;
 
-  const family = getFamilyByScheduleId(schedule.id);
+  const family = getFamilyForSchedule(schedule.id);
   const genderText = schedule.gender === 'male' ? '先生' : '女士';
+  const boardProgress = schedule.boardProgress;
 
-  // 开始仪式：booked → ongoing
   const handleStart = () => {
     Taro.showModal({
       title: '开始仪式',
@@ -52,10 +94,11 @@ const ScheduleDetailPage: React.FC = () => {
       success: (res) => {
         if (res.confirm) {
           updateScheduleStatus(schedule.id, 'ongoing');
+          advanceBoardStep(schedule.id, 'flow_confirmed');
+          advanceBoardStep(schedule.id, 'ceremony_start');
           Taro.showToast({ title: '仪式已开始', icon: 'success' });
           setTimeout(() => {
             refreshSchedule();
-            // 自动跳转到追思流程
             Taro.switchTab({ url: '/pages/ceremony/index' });
           }, 800);
         }
@@ -63,7 +106,6 @@ const ScheduleDetailPage: React.FC = () => {
     });
   };
 
-  // 完成仪式：ongoing → completed，并引导去结算
   const handleComplete = () => {
     Taro.showModal({
       title: '完成仪式',
@@ -73,6 +115,8 @@ const ScheduleDetailPage: React.FC = () => {
       success: (res) => {
         if (res.confirm) {
           updateScheduleStatus(schedule.id, 'completed');
+          advanceBoardStep(schedule.id, 'ceremony_complete');
+          addOrUpdateSettlement(schedule);
           Taro.showToast({ title: '仪式圆满完成', icon: 'success' });
           setTimeout(() => {
             refreshSchedule();
@@ -93,18 +137,49 @@ const ScheduleDetailPage: React.FC = () => {
     });
   };
 
-  // 去追思流程页
   const goCeremony = () => {
     setCurrentScheduleId(schedule.id);
     setReligionFromSchedule(schedule.religion);
+    advanceBoardStep(schedule.id, 'flow_confirmed');
+    refreshSchedule();
     Taro.switchTab({ url: '/pages/ceremony/index' });
+  };
+
+  const handleBoardStepClick = (step: BoardStep) => {
+    if (!step.path) return;
+    if (step.key === 'communicate') {
+      setCurrentScheduleId(schedule.id);
+    }
+    if (step.isTab) {
+      Taro.switchTab({ url: step.path });
+    } else {
+      Taro.navigateTo({ url: step.path });
+    }
+  };
+
+  const getStepStyle = (status?: BoardStepStatus) => {
+    switch (status) {
+      case 'done':
+        return { bg: '#38A169', color: '#fff', border: '#38A169' };
+      case 'doing':
+        return { bg: '#D69E2E', color: '#fff', border: '#D69E2E' };
+      default:
+        return { bg: '#EDF2F7', color: '#718096', border: '#CBD5E0' };
+    }
   };
 
   return (
     <View className={styles.container}>
       <View className={styles.headerCard}>
         <StatusBadge status={schedule.status} />
-        <View style={{ height: 20 }}></View>
+        {settleSummary && (
+          <View style={{ marginTop: 12 }}>
+            <Text style={{ fontSize: 22, color: settleSummary.color, fontWeight: 600 }}>
+              {settleSummary.text}
+            </Text>
+          </View>
+        )}
+        <View style={{ height: 12 }} />
         <Text className={styles.deceasedName}>
           {schedule.deceasedName} {genderText}
         </Text>
@@ -117,6 +192,88 @@ const ScheduleDetailPage: React.FC = () => {
         <View className={styles.infoRow}>
           <Text>⏰ {schedule.time}</Text>
           <Text>📍 {schedule.hallName}</Text>
+        </View>
+      </View>
+
+      <View className={styles.card}>
+        <SectionHeader
+          title="服务执行看板"
+          subtitle="点击带链接的步骤可跳转对应页面"
+        />
+        <View style={{ display: 'flex', flexDirection: 'column', marginTop: 16, gap: 12 }}>
+          {boardSteps.map((step, idx) => {
+            const status = boardProgress?.[step.key] || 'pending';
+            const style = getStepStyle(status);
+            const isClickable = !!step.path && status !== 'pending';
+            return (
+              <View
+                key={step.key}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  padding: 16,
+                  background: '#F7FAFC',
+                  borderRadius: 12,
+                  border: `2rpx solid ${style.border}`,
+                  opacity: isClickable ? 1 : 0.9
+                }}
+                onClick={() => isClickable && handleBoardStepClick(step)}
+              >
+                <View
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    background: style.bg,
+                    color: style.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 24,
+                    fontWeight: 600,
+                    marginRight: 16,
+                    flexShrink: 0
+                  }}
+                >
+                  {step.icon}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ fontSize: 28, color: '#1A202C', fontWeight: 600 }}>
+                      {idx + 1}. {step.label}
+                    </Text>
+                    {step.path && isClickable && (
+                      <Text style={{ fontSize: 20, color: '#2C5282' }}>›</Text>
+                    )}
+                  </View>
+                  <Text style={{ fontSize: 22, color: '#718096', marginTop: 4 }}>
+                    {step.description}
+                    {status === 'doing' && (
+                      <Text style={{ color: '#D69E2E', marginLeft: 8 }}> · 进行中</Text>
+                    )}
+                  </Text>
+                </View>
+                <View>
+                  <Text
+                    style={{
+                      fontSize: 20,
+                      color: style.color,
+                      padding: '4rpx 12rpx',
+                      borderRadius: 8,
+                      background:
+                        status === 'done'
+                          ? 'rgba(56,161,105,0.1)'
+                          : status === 'doing'
+                          ? 'rgba(214,158,46,0.1)'
+                          : 'transparent'
+                    }}
+                  >
+                    {status === 'done' ? '✓ 完成' : status === 'doing' ? '● 进行' : '○ 待办'}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
         </View>
       </View>
 
@@ -163,24 +320,47 @@ const ScheduleDetailPage: React.FC = () => {
       <View className={styles.card}>
         <SectionHeader
           title="家属联系人"
-          extra={<Text style={{ color: '#2C5282', fontSize: 24 }}>查看沟通记录 ›</Text>}
+          extra={
+            <Text
+              style={{ color: '#2C5282', fontSize: 24 }}
+              onClick={() => {
+                setCurrentScheduleId(schedule.id);
+                Taro.navigateTo({ url: '/pages/family/index' });
+              }}
+            >
+              查看沟通记录 ›
+            </Text>
+          }
         />
         {family && (
           <View
             className={styles.familyContact}
-            onClick={() => Taro.navigateTo({ url: '/pages/family/index' })}
+            onClick={() => {
+              setCurrentScheduleId(schedule.id);
+              Taro.navigateTo({ url: '/pages/family/index' });
+            }}
           >
             <View className={styles.familyAvatar}>
               {family.name.charAt(0)}
             </View>
             <View className={styles.familyInfo}>
               <Text className={styles.familyName}>{family.name}</Text>
-              <Text className={styles.familyRel}>{family.relation} · {family.phone}</Text>
+              <Text className={styles.familyRel}>
+                {family.relation} · {family.phone}
+              </Text>
+              {familySummary && familySummary.latest && (
+                <Text style={{ fontSize: 22, color: '#718096', marginTop: 4 }}>
+                  最近沟通：{familySummary.latest.slice(0, 20)}...
+                </Text>
+              )}
             </View>
-            <View className={styles.phoneBtn} onClick={(e) => {
-              e.stopPropagation();
-              Taro.makePhoneCall({ phoneNumber: family.phone.replace(/\*/g, '0') });
-            }}>
+            <View
+              className={styles.phoneBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                Taro.makePhoneCall({ phoneNumber: family.phone.replace(/\*/g, '0') });
+              }}
+            >
               📞
             </View>
           </View>
@@ -217,7 +397,7 @@ const ScheduleDetailPage: React.FC = () => {
                 alignItems: 'center',
                 padding: 24,
                 background: '#F7FAFC',
-                borderRadius: 12,
+                borderRadius: 12
               }}
               onClick={action.onClick}
             >
@@ -227,76 +407,6 @@ const ScheduleDetailPage: React.FC = () => {
           ))}
         </View>
       </View>
-
-      {/* 状态流程说明 */}
-      {schedule.status !== 'completed' && (
-        <View className={styles.card}>
-          <SectionHeader title="当前进度" />
-          <View style={{ display: 'flex', marginTop: 16, alignItems: 'center', gap: 8 }}>
-            {[
-              { label: '已预约', status: 'booked', icon: '📋' },
-              { label: '进行中', status: 'ongoing', icon: '▶️' },
-              { label: '已完成', status: 'completed', icon: '✅' }
-            ].map((step, idx) => {
-              const order = ['booked', 'ongoing', 'completed'];
-              const curIdx = order.indexOf(schedule.status);
-              const stepIdx = order.indexOf(step.status);
-              const isDone = stepIdx < curIdx || schedule.status === step.status;
-              const isActive = schedule.status === step.status;
-              return (
-                <View key={step.status} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                  <View
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      flex: 1
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: 28,
-                        background: isActive ? '#D69E2E' : isDone ? '#38A169' : '#E2E8F0',
-                        color: isActive || isDone ? '#fff' : '#718096',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 24,
-                        fontWeight: 600,
-                        marginBottom: 8
-                      }}
-                    >
-                      {step.icon}
-                    </View>
-                    <Text
-                      style={{
-                        fontSize: 22,
-                        color: isActive ? '#D69E2E' : isDone ? '#38A169' : '#A0AEC0',
-                        fontWeight: isActive || isDone ? 600 : 400
-                      }}
-                    >
-                      {step.label}
-                    </Text>
-                  </View>
-                  {idx < 2 && (
-                    <View
-                      style={{
-                        height: 4,
-                        flex: 1,
-                        background: stepIdx < curIdx ? '#38A169' : '#E2E8F0',
-                        borderRadius: 2,
-                        margin: '0 8rpx 32rpx 8rpx'
-                      }}
-                    />
-                  )}
-                </View>
-              );
-            })}
-          </View>
-        </View>
-      )}
 
       <View className={styles.bottomBar}>
         <View

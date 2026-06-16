@@ -1,12 +1,28 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import Taro from '@tarojs/taro';
-import { ScheduleItem, ReligionType, CeremonyStep } from '@/types';
+import {
+  ScheduleItem,
+  ReligionType,
+  CeremonyStep,
+  SettlementItem,
+  FamilyContact,
+  CommunicationRecord,
+  BoardStepKey,
+  BoardStepStatus
+} from '@/types';
 import { mockSchedules } from '@/data/schedule';
-import { mockCeremonySteps } from '@/data/ceremony';
+import { mockSettlements } from '@/data/settlement';
+import { mockFamilyContacts, getFamilyByScheduleId } from '@/data/family';
 
-// ===========================
-// 全局状态类型定义
-// ===========================
+const defaultBoardProgress = (): Record<BoardStepKey, BoardStepStatus> => ({
+  booked: 'done',
+  communicate: 'pending',
+  flow_confirmed: 'pending',
+  ceremony_start: 'pending',
+  ceremony_complete: 'pending',
+  settled: 'pending'
+});
+
 interface AppState {
   schedules: ScheduleItem[];
   currentScheduleId: string | null;
@@ -17,7 +33,11 @@ interface AppState {
     highlights: string[];
     religion: ReligionType;
   } | null;
+  caseAppliedHighlights: string[] | null;
+  caseAppliedTitle: string | null;
   religionFromSchedule: ReligionType | null;
+  settlements: SettlementItem[];
+  familyMap: Record<string, FamilyContact>;
 }
 
 interface AppContextType extends AppState {
@@ -29,53 +49,66 @@ interface AppContextType extends AppState {
   setCasePlan: (data: AppState['casePlanData']) => void;
   clearCasePlan: () => void;
   setReligionFromSchedule: (religion: ReligionType | null) => void;
+  setBoardStepStatus: (scheduleId: string, step: BoardStepKey, status: BoardStepStatus) => void;
+  advanceBoardStep: (scheduleId: string, step: BoardStepKey) => void;
+  getSettlementByScheduleId: (scheduleId: string) => SettlementItem | undefined;
+  addOrUpdateSettlement: (schedule: ScheduleItem) => SettlementItem;
+  applySettlementPaid: (scheduleId: string, method?: string) => void;
+  getFamilyForSchedule: (scheduleId: string) => FamilyContact | undefined;
+  addCommunicationRecord: (
+    scheduleId: string,
+    record: Omit<CommunicationRecord, 'id' | 'date'>
+  ) => void;
+  setCaseApplied: (title: string, highlights: string[]) => void;
+  clearCaseApplied: () => void;
 }
 
-const STORAGE_KEY = 'funeral_app_state_v1';
+const STORAGE_KEY = 'funeral_app_state_v2';
 
-// ===========================
-// 默认初始状态
-// ===========================
+const initScheduleWithDefaults = (s: ScheduleItem): ScheduleItem => ({
+  ...s,
+  boardProgress: s.boardProgress || defaultBoardProgress(),
+  settlementStatus: s.settlementStatus || (s.status === 'completed' ? 'pending' : 'none')
+});
+
 const defaultState: AppState = {
-  schedules: mockSchedules,
+  schedules: mockSchedules.map(initScheduleWithDefaults),
   currentScheduleId: null,
   casePlanData: null,
-  religionFromSchedule: null
+  caseAppliedHighlights: null,
+  caseAppliedTitle: null,
+  religionFromSchedule: null,
+  settlements: mockSettlements,
+  familyMap: mockFamilyContacts.reduce((acc, f) => {
+    if (f.scheduleId) acc[f.scheduleId] = f;
+    return acc;
+  }, {} as Record<string, FamilyContact>)
 };
 
-// ===========================
-// Context
-// ===========================
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// ===========================
-// 加载持久化数据
-// ===========================
 const loadPersistedState = (): Partial<AppState> => {
   try {
     const raw = Taro.getStorageSync(STORAGE_KEY);
-    if (raw && typeof raw === 'object') {
-      return raw;
-    }
-    if (typeof raw === 'string' && raw) {
-      return JSON.parse(raw);
-    }
+    if (raw && typeof raw === 'object') return raw;
+    if (typeof raw === 'string' && raw) return JSON.parse(raw);
   } catch (e) {
     console.warn('[AppStore] 加载状态失败:', e);
   }
   return {};
 };
 
-// ===========================
-// 保存持久化数据
-// ===========================
 const persistState = (state: Partial<AppState>) => {
   try {
     Taro.setStorage({
       key: STORAGE_KEY,
       data: JSON.stringify({
         schedules: state.schedules,
-        currentScheduleId: state.currentScheduleId
+        currentScheduleId: state.currentScheduleId,
+        caseAppliedHighlights: state.caseAppliedHighlights,
+        caseAppliedTitle: state.caseAppliedTitle,
+        settlements: state.settlements,
+        familyMap: state.familyMap
       })
     });
   } catch (e) {
@@ -83,23 +116,57 @@ const persistState = (state: Partial<AppState>) => {
   }
 };
 
-// ===========================
-// Provider 组件
-// ===========================
+const mergeBoardByStatus = (
+  schedule: ScheduleItem
+): Record<BoardStepKey, BoardStepStatus> => {
+  const base = schedule.boardProgress || defaultBoardProgress();
+  const s = schedule.status;
+  if (s === 'free') return base;
+  base.booked = 'done';
+  if (s === 'booked') {
+    base.communicate = base.communicate === 'done' ? 'done' : 'doing';
+  }
+  if (s === 'ongoing') {
+    base.communicate = 'done';
+    base.flow_confirmed = 'done';
+    base.ceremony_start = 'done';
+    base.ceremony_complete = base.ceremony_complete === 'done' ? 'done' : 'doing';
+  }
+  if (s === 'completed') {
+    base.communicate = 'done';
+    base.flow_confirmed = 'done';
+    base.ceremony_start = 'done';
+    base.ceremony_complete = 'done';
+    if (schedule.settlementStatus === 'paid') {
+      base.settled = 'done';
+    } else if (schedule.settlementStatus === 'pending') {
+      base.settled = 'doing';
+    }
+  }
+  return base;
+};
+
 export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const persisted = loadPersistedState();
   const [state, setState] = useState<AppState>({
     ...defaultState,
-    ...persisted
+    ...persisted,
+    schedules: (persisted.schedules || defaultState.schedules).map(initScheduleWithDefaults)
   });
 
   useEffect(() => {
     persistState(state);
-  }, [state.schedules, state.currentScheduleId]);
+  }, [
+    state.schedules,
+    state.currentScheduleId,
+    state.caseAppliedHighlights,
+    state.caseAppliedTitle,
+    state.settlements,
+    state.familyMap
+  ]);
 
-  // 新增档期
   const addSchedule = (data: Partial<ScheduleItem>): ScheduleItem => {
-    const newItem: ScheduleItem = {
+    const newItem: ScheduleItem = initScheduleWithDefaults({
       id: 's_' + Date.now().toString(36),
       date: data.date || new Date().toISOString().slice(0, 10),
       time: data.time || '09:00-11:00',
@@ -114,59 +181,238 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
       religion: data.religion || 'none',
       ceremonyType: data.ceremonyType || '现代简约仪式',
       notes: data.notes || '',
-      amount: data.amount || 0
-    };
-    setState(prev => ({
-      ...prev,
-      schedules: [...prev.schedules, newItem]
-    }));
+      amount: data.amount || 0,
+      settlementStatus: 'none'
+    });
+    setState(prev => {
+      const filtered = prev.schedules.filter(
+        s => !(s.status === 'free' && s.date === newItem.date && s.time === newItem.time)
+      );
+      return {
+        ...prev,
+        schedules: [...filtered, newItem],
+        familyMap: data.familyName
+          ? {
+              ...prev.familyMap,
+              [newItem.id]: {
+                id: 'f_' + newItem.id,
+                name: data.familyName,
+                relation: '家属',
+                phone: data.familyPhone || '',
+                scheduleId: newItem.id,
+                communicationRecords: [],
+                requirements: data.notes ? [data.notes] : []
+              }
+            }
+          : prev.familyMap
+      };
+    });
     return newItem;
   };
 
-  // 更新档期状态
   const updateScheduleStatus = (id: string, status: ScheduleItem['status']) => {
     setState(prev => ({
       ...prev,
-      schedules: prev.schedules.map(s =>
-        s.id === id ? { ...s, status } : s
-      )
+      schedules: prev.schedules.map(s => {
+        if (s.id !== id) return s;
+        const updated: ScheduleItem = {
+          ...s,
+          status,
+          settlementStatus:
+            status === 'completed'
+              ? s.settlementStatus === 'paid'
+                ? 'paid'
+                : 'pending'
+              : s.settlementStatus || 'none'
+        };
+        updated.boardProgress = mergeBoardByStatus(updated);
+        return updated;
+      })
     }));
   };
 
-  // 更新档期任意字段
   const updateSchedule = (id: string, data: Partial<ScheduleItem>) => {
     setState(prev => ({
       ...prev,
-      schedules: prev.schedules.map(s =>
-        s.id === id ? { ...s, ...data } : s
-      )
+      schedules: prev.schedules.map(s => (s.id === id ? { ...s, ...data } : s))
     }));
   };
 
-  // 设置当前活跃档期ID
   const setCurrentScheduleId = (id: string | null) => {
     setState(prev => ({ ...prev, currentScheduleId: id }));
   };
 
-  // 获取当前活跃档期
   const getCurrentSchedule = () => {
     if (!state.currentScheduleId) return undefined;
     return state.schedules.find(s => s.id === state.currentScheduleId);
   };
 
-  // 设置从案例套用的数据
   const setCasePlan = (data: AppState['casePlanData']) => {
     setState(prev => ({ ...prev, casePlanData: data }));
   };
 
-  // 清除案例方案
   const clearCasePlan = () => {
     setState(prev => ({ ...prev, casePlanData: null }));
   };
 
-  // 设置从档期传入的宗教类型
   const setReligionFromSchedule = (religion: ReligionType | null) => {
     setState(prev => ({ ...prev, religionFromSchedule: religion }));
+  };
+
+  const setBoardStepStatus = (
+    scheduleId: string,
+    step: BoardStepKey,
+    status: BoardStepStatus
+  ) => {
+    setState(prev => ({
+      ...prev,
+      schedules: prev.schedules.map(s =>
+        s.id === scheduleId
+          ? {
+              ...s,
+              boardProgress: {
+                ...(s.boardProgress || defaultBoardProgress()),
+                [step]: status
+              }
+            }
+          : s
+      )
+    }));
+  };
+
+  const advanceBoardStep = (scheduleId: string, step: BoardStepKey) => {
+    setBoardStepStatus(scheduleId, step, 'done');
+  };
+
+  const getSettlementByScheduleId = (scheduleId: string) => {
+    return state.settlements.find(s => s.scheduleId === scheduleId);
+  };
+
+  const addOrUpdateSettlement = (schedule: ScheduleItem): SettlementItem => {
+    const existing = state.settlements.find(s => s.scheduleId === schedule.id);
+    if (existing) return existing;
+    const newSettle: SettlementItem = {
+      id: 'st_' + Date.now().toString(36),
+      scheduleId: schedule.id,
+      date: schedule.date,
+      deceasedName: schedule.deceasedName,
+      amount: schedule.amount || 0,
+      status: 'pending'
+    };
+    setState(prev => ({
+      ...prev,
+      settlements: [...prev.settlements, newSettle],
+      schedules: prev.schedules.map(s =>
+        s.id === schedule.id ? { ...s, settlementStatus: 'pending' } : s
+      )
+    }));
+    return newSettle;
+  };
+
+  const applySettlementPaid = (scheduleId: string, method: string = '微信支付') => {
+    const now = new Date().toISOString().slice(0, 10);
+    setState(prev => {
+      const schedule = prev.schedules.find(s => s.id === scheduleId);
+      let settlements = prev.settlements.map(s =>
+        s.scheduleId === scheduleId
+          ? { ...s, status: 'paid' as const, paymentMethod: method, paidDate: now }
+          : s
+      );
+      if (!settlements.some(s => s.scheduleId === scheduleId) && schedule) {
+        settlements.push({
+          id: 'st_' + Date.now().toString(36),
+          scheduleId,
+          date: schedule.date,
+          deceasedName: schedule.deceasedName,
+          amount: schedule.amount || 0,
+          status: 'paid',
+          paymentMethod: method,
+          paidDate: now
+        });
+      }
+      const schedules = prev.schedules.map(s =>
+        s.id === scheduleId
+          ? {
+              ...s,
+              settlementStatus: 'paid',
+              boardProgress: mergeBoardByStatus({
+                ...s,
+                settlementStatus: 'paid'
+              })
+            }
+          : s
+      );
+      return { ...prev, settlements, schedules };
+    });
+  };
+
+  const getFamilyForSchedule = (scheduleId: string): FamilyContact | undefined => {
+    if (state.familyMap[scheduleId]) return state.familyMap[scheduleId];
+    return getFamilyByScheduleId(scheduleId);
+  };
+
+  const addCommunicationRecord = (
+    scheduleId: string,
+    record: Omit<CommunicationRecord, 'id' | 'date'>
+  ) => {
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+      now.getDate()
+    ).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(
+      now.getMinutes()
+    ).padStart(2, '0')}`;
+    const newRecord: CommunicationRecord = {
+      id: 'r_' + Date.now().toString(36),
+      date: dateStr,
+      ...record
+    };
+    setState(prev => {
+      const existing = prev.familyMap[scheduleId];
+      const base: FamilyContact = existing || {
+        id: 'f_' + scheduleId,
+        name: prev.schedules.find(s => s.id === scheduleId)?.familyName || '家属',
+        relation: '家属',
+        phone: prev.schedules.find(s => s.id === scheduleId)?.familyPhone || '',
+        scheduleId,
+        communicationRecords: [],
+        requirements: []
+      };
+      const updated: FamilyContact = {
+        ...base,
+        communicationRecords: [newRecord, ...base.communicationRecords]
+      };
+      return {
+        ...prev,
+        familyMap: { ...prev.familyMap, [scheduleId]: updated },
+        schedules: prev.schedules.map(s =>
+          s.id === scheduleId
+            ? {
+                ...s,
+                boardProgress: {
+                  ...(s.boardProgress || defaultBoardProgress()),
+                  communicate: 'done'
+                }
+              }
+            : s
+        )
+      };
+    });
+  };
+
+  const setCaseApplied = (title: string, highlights: string[]) => {
+    setState(prev => ({
+      ...prev,
+      caseAppliedTitle: title,
+      caseAppliedHighlights: highlights
+    }));
+  };
+
+  const clearCaseApplied = () => {
+    setState(prev => ({
+      ...prev,
+      caseAppliedTitle: null,
+      caseAppliedHighlights: null
+    }));
   };
 
   const value: AppContextType = {
@@ -178,15 +424,21 @@ export const AppStoreProvider: React.FC<{ children: ReactNode }> = ({ children }
     getCurrentSchedule,
     setCasePlan,
     clearCasePlan,
-    setReligionFromSchedule
+    setReligionFromSchedule,
+    setBoardStepStatus,
+    advanceBoardStep,
+    getSettlementByScheduleId,
+    addOrUpdateSettlement,
+    applySettlementPaid,
+    getFamilyForSchedule,
+    addCommunicationRecord,
+    setCaseApplied,
+    clearCaseApplied
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
-// ===========================
-// Hook
-// ===========================
 export const useAppStore = (): AppContextType => {
   const ctx = useContext(AppContext);
   if (!ctx) {
@@ -200,7 +452,16 @@ export const useAppStore = (): AppContextType => {
       getCurrentSchedule: () => undefined,
       setCasePlan: () => {},
       clearCasePlan: () => {},
-      setReligionFromSchedule: () => {}
+      setReligionFromSchedule: () => {},
+      setBoardStepStatus: () => {},
+      advanceBoardStep: () => {},
+      getSettlementByScheduleId: () => undefined,
+      addOrUpdateSettlement: () => ({ id: 'temp', date: '', deceasedName: '', amount: 0, status: 'pending' } as SettlementItem),
+      applySettlementPaid: () => {},
+      getFamilyForSchedule: () => undefined,
+      addCommunicationRecord: () => {},
+      setCaseApplied: () => {},
+      clearCaseApplied: () => {}
     };
   }
   return ctx;

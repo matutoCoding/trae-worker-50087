@@ -4,6 +4,16 @@ export type ReligionType = 'buddhism' | 'taoism' | 'christianity' | 'catholicism
 
 export type CaseCategory = 'traditional' | 'modern' | 'religious' | 'customized';
 
+export type BoardStepKey =
+  | 'booked'
+  | 'communicate'
+  | 'flow_confirmed'
+  | 'ceremony_start'
+  | 'ceremony_complete'
+  | 'settled';
+
+export type BoardStepStatus = 'pending' | 'doing' | 'done';
+
 export interface ScheduleItem {
   id: string;
   date: string;
@@ -20,6 +30,8 @@ export interface ScheduleItem {
   ceremonyType: string;
   notes?: string;
   amount?: number;
+  boardProgress?: Record<BoardStepKey, BoardStepStatus>;
+  settlementStatus?: 'none' | 'pending' | 'paid';
 }
 
 export interface CeremonyStep {

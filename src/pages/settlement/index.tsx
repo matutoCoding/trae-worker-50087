@@ -4,19 +4,38 @@ import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import classnames from 'classnames';
 import SectionHeader from '@/components/SectionHeader';
-import { mockReviews, mockSettlements, getMonthlyIncome, mockMasterProfile } from '@/data/settlement';
+import { mockReviews, mockMasterProfile } from '@/data/settlement';
 import { ReviewItem, SettlementItem } from '@/types';
-import { formatMoney, getStatusText, renderStars } from '@/utils';
+import { formatMoney, renderStars } from '@/utils';
+import { useAppStore } from '@/store/AppContext';
 
 const SettlementPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>('review');
+  const {
+    settlements,
+    getCurrentSchedule,
+    applySettlementPaid,
+    addOrUpdateSettlement,
+    advanceBoardStep
+  } = useAppStore();
+  const [activeTab, setActiveTab] = useState<string>('settle');
   const [settleFilter, setSettleFilter] = useState<string>('all');
+  const [highlightId, setHighlightId] = useState<string | null>(null);
 
   useDidShow(() => {
     console.log('[SettlementPage] 页面显示');
+    const currentSchedule = getCurrentSchedule();
+    if (currentSchedule && currentSchedule.status === 'completed') {
+      const added = addOrUpdateSettlement(currentSchedule);
+      setHighlightId(added.id);
+      setTimeout(() => setHighlightId(null), 2000);
+    }
   });
 
-  const monthlyIncome = useMemo(() => getMonthlyIncome(), []);
+  const monthlyIncome = useMemo(() => {
+    const paid = settlements.filter(s => s.status === 'paid').reduce((sum, s) => sum + s.amount, 0);
+    const pending = settlements.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.amount, 0);
+    return { paid, pending, total: paid + pending };
+  }, [settlements]);
 
   const reviewStats = useMemo(() => {
     const total = mockReviews.length;
@@ -55,15 +74,31 @@ const SettlementPage: React.FC = () => {
   }, []);
 
   const filteredSettlements = useMemo((): SettlementItem[] => {
-    if (settleFilter === 'all') return mockSettlements;
-    return mockSettlements.filter(s => s.status === settleFilter);
-  }, [settleFilter]);
+    let list = settlements;
+    if (settleFilter !== 'all') {
+      list = list.filter(s => s.status === settleFilter);
+    }
+    return list.slice().sort((a, b) => b.date.localeCompare(a.date));
+  }, [settlements, settleFilter]);
 
   const settleTabs = [
     { key: 'all', label: '全部' },
     { key: 'pending', label: '待结算' },
     { key: 'paid', label: '已结算' }
   ];
+
+  const handleApplyPaid = (settle: SettlementItem) => {
+    if (!settle.scheduleId) return;
+    Taro.showActionSheet({
+      itemList: ['微信支付', '支付宝', '银行转账', '现金'],
+      success: (res) => {
+        const methods = ['微信支付', '支付宝', '银行转账', '现金'];
+        applySettlementPaid(settle.scheduleId!, methods[res.tapIndex]);
+        advanceBoardStep(settle.scheduleId!, 'settled');
+        Taro.showToast({ title: '已申请结算', icon: 'success' });
+      }
+    });
+  };
 
   return (
     <View className={styles.container}>
@@ -231,7 +266,7 @@ const SettlementPage: React.FC = () => {
                 <Text className={styles.incomeItemLabel}>待结算</Text>
               </View>
               <View className={styles.incomeItem}>
-                <Text className={styles.incomeItemNum}>{mockSettlements.length}</Text>
+                <Text className={styles.incomeItemNum}>{settlements.length}</Text>
                 <Text className={styles.incomeItemLabel}>服务单数</Text>
               </View>
             </View>
@@ -252,7 +287,14 @@ const SettlementPage: React.FC = () => {
             </View>
             <View className={styles.settleList}>
               {filteredSettlements.map((settle: SettlementItem) => (
-                <View key={settle.id} className={classnames(styles.settleCard, settle.status)}>
+                <View
+                  key={settle.id}
+                  className={classnames(
+                    styles.settleCard,
+                    settle.status,
+                    highlightId === settle.id && styles.highlight
+                  )}
+                >
                   <View className={styles.settleHeader}>
                     <Text className={styles.settleName}>{settle.deceasedName} · 告别仪式主持</Text>
                     <View className={classnames(styles.settleStatus, settle.status)}>
@@ -278,7 +320,7 @@ const SettlementPage: React.FC = () => {
                   {settle.status === 'pending' && (
                     <View
                       className={styles.actionBtn}
-                      onClick={() => Taro.showToast({ title: '申请结算', icon: 'none' })}
+                      onClick={() => handleApplyPaid(settle)}
                     >
                       📤 申请结算
                     </View>
