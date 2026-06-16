@@ -1,4 +1,4 @@
-@import '@/styles/theme.scss';
+@use '@/styles/variables.scss' as *;
 
 .container {
   min-height: 100vh;
@@ -31,7 +31,7 @@
   transition: all 0.3s;
 
   &.active {
-    border-color: $primary-color;
+    border-color: $color-primary;
     background: rgba(44, 82, 130, 0.05);
   }
 }
@@ -40,7 +40,7 @@
   width: 80rpx;
   height: 80rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, $primary-color, #4299E1);
+  background: linear-gradient(135deg, $color-primary, #4299E1);
   color: #FFFFFF;
   display: flex;
   align-items: center;
@@ -96,16 +96,16 @@
 .statNum {
   font-size: 40rpx;
   font-weight: 700;
-  color: $primary-color;
+  color: $color-primary;
   margin-bottom: 8rpx;
 }
 
 .statNum.warm {
-  color: $warm-red;
+  color: $color-warm;
 }
 
 .statNum.gold {
-  color: $warm-gold;
+  color: $color-gold;
 }
 
 .statLabel {
@@ -139,8 +139,8 @@
 
   &.active {
     background: rgba(44, 82, 130, 0.1);
-    color: $primary-color;
-    border-color: $primary-color;
+    color: $color-primary;
+    border-color: $color-primary;
   }
 }
 
@@ -157,13 +157,13 @@
   padding: 16rpx 20rpx;
   background: #F7FAFC;
   border-radius: 12rpx;
-  border-left: 6rpx solid $primary-color;
+  border-left: 6rpx solid $color-primary;
 }
 
 .reqCheck {
   margin-right: 12rpx;
   margin-top: 2rpx;
-  color: $primary-color;
+  color: $color-primary;
   font-size: 24rpx;
   font-weight: 700;
 }
@@ -208,8 +208,8 @@
   height: 28rpx;
   border-radius: 50%;
   border: 4rpx solid #FFFFFF;
-  box-shadow: 0 0 0 2rpx $primary-color;
-  background: $primary-color;
+  box-shadow: 0 0 0 2rpx $color-primary;
+  background: $color-primary;
 
   &.call {
     background: #3182CE;
@@ -222,8 +222,8 @@
   }
 
   &.meeting {
-    background: $warm-gold;
-    box-shadow: 0 0 0 2rpx $warm-gold;
+    background: $color-gold;
+    box-shadow: 0 0 0 2rpx $color-gold;
   }
 }
 
@@ -260,7 +260,7 @@
 
   &.meeting {
     background: rgba(214, 158, 46, 0.1);
-    color: $warm-gold;
+    color: $color-gold;
   }
 }
 
@@ -320,7 +320,7 @@
 
 .reminderAction {
   font-size: 22rpx;
-  color: $warm-red;
+  color: $color-warm;
   font-weight: 500;
 }
 
@@ -354,12 +354,12 @@
   transition: all 0.3s;
 
   &.primary {
-    background: $primary-color;
+    background: $color-primary;
     color: #FFFFFF;
   }
 
   &.warm {
-    background: $warm-gold;
+    background: $color-gold;
     color: #FFFFFF;
   }
 }

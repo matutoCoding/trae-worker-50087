@@ -1,4 +1,4 @@
-@import '@/styles/theme.scss';
+@use '@/styles/variables.scss' as *;
 
 .container {
   min-height: 100vh;
@@ -27,14 +27,14 @@
   transition: all 0.3s;
 
   &.active {
-    background: $primary-color;
+    background: $color-primary;
     color: #FFFFFF;
     font-weight: 600;
   }
 }
 
 .incomeHeader {
-  background: linear-gradient(135deg, $primary-color 0%, #2B6CB0 100%);
+  background: linear-gradient(135deg, $color-primary 0%, #2B6CB0 100%);
   border-radius: 16rpx;
   padding: 32rpx 24rpx;
   margin-bottom: 24rpx;
@@ -105,12 +105,12 @@
 .statNum {
   font-size: 36rpx;
   font-weight: 700;
-  color: $primary-color;
+  color: $color-primary;
   margin-bottom: 6rpx;
 }
 
 .statNum.gold {
-  color: $warm-gold;
+  color: $color-gold;
 }
 
 .statNum.green {
@@ -118,7 +118,7 @@
 }
 
 .statNum.red {
-  color: $warm-red;
+  color: $color-warm;
 }
 
 .statLabel {
@@ -153,14 +153,14 @@
 .ratingNum {
   font-size: 64rpx;
   font-weight: 700;
-  color: $warm-gold;
+  color: $color-gold;
   line-height: 1;
   margin-bottom: 8rpx;
 }
 
 .ratingStars {
   font-size: 28rpx;
-  color: $warm-gold;
+  color: $color-gold;
   letter-spacing: 4rpx;
 }
 
@@ -193,7 +193,7 @@
 
 .ratingBarFill {
   height: 100%;
-  background: linear-gradient(90deg, $warm-gold, #F6E05E);
+  background: linear-gradient(90deg, $color-gold, #F6E05E);
   border-radius: 6rpx;
 }
 
@@ -215,13 +215,13 @@
   border-radius: 32rpx;
   background: rgba(44, 82, 130, 0.08);
   font-size: 24rpx;
-  color: $primary-color;
+  color: $color-primary;
   font-weight: 500;
 }
 
 .tagItem.highlight {
   background: rgba(197, 48, 48, 0.08);
-  color: $warm-red;
+  color: $color-warm;
 }
 
 .reviewList {
@@ -253,7 +253,7 @@
   width: 64rpx;
   height: 64rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, $primary-color, #4299E1);
+  background: linear-gradient(135deg, $color-primary, #4299E1);
   color: #FFFFFF;
   display: flex;
   align-items: center;
@@ -277,7 +277,7 @@
 
 .reviewStars {
   font-size: 24rpx;
-  color: $warm-gold;
+  color: $color-gold;
   letter-spacing: 2rpx;
 }
 
@@ -300,20 +300,20 @@
   border-radius: 8rpx;
   background: rgba(44, 82, 130, 0.1);
   font-size: 20rpx;
-  color: $primary-color;
+  color: $color-primary;
 }
 
 .reviewReply {
   padding: 16rpx 20rpx;
   background: rgba(44, 82, 130, 0.05);
   border-radius: 8rpx;
-  border-left: 4rpx solid $primary-color;
+  border-left: 4rpx solid $color-primary;
   margin-top: 8rpx;
 }
 
 .replyLabel {
   font-size: 22rpx;
-  color: $primary-color;
+  color: $color-primary;
   font-weight: 600;
   margin-bottom: 6rpx;
 }
@@ -342,8 +342,8 @@
 
   &.active {
     background: rgba(44, 82, 130, 0.1);
-    color: $primary-color;
-    border-color: $primary-color;
+    color: $color-primary;
+    border-color: $color-primary;
   }
 }
 
@@ -429,7 +429,7 @@
 }
 
 .settleAmount.pending {
-  color: $warm-red;
+  color: $color-warm;
 }
 
 .settleAmount.paid {
@@ -443,6 +443,6 @@
   border-radius: 8rpx;
   font-size: 24rpx;
   font-weight: 500;
-  background: $primary-color;
+  background: $color-primary;
   color: #FFFFFF;
 }

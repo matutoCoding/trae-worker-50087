@@ -1,4 +1,4 @@
-@import '@/styles/theme.scss';
+@use '@/styles/variables.scss' as *;
 
 .container {
   min-height: 100vh;
@@ -106,7 +106,7 @@
 
 .ratingStars {
   font-size: 40rpx;
-  color: $warm-gold;
+  color: $color-gold;
   letter-spacing: 6rpx;
   margin-right: 16rpx;
 }
@@ -114,7 +114,7 @@
 .ratingScore {
   font-size: 40rpx;
   font-weight: 700;
-  color: $warm-gold;
+  color: $color-gold;
   margin-right: 8rpx;
 }
 
@@ -150,7 +150,7 @@
   width: 48rpx;
   height: 48rpx;
   border-radius: 50%;
-  background: $primary-color;
+  background: $color-primary;
   color: #FFFFFF;
   display: flex;
   align-items: center;
@@ -208,7 +208,7 @@
 
 .feedbackQuote {
   font-size: 48rpx;
-  color: $primary-color;
+  color: $color-primary;
   line-height: 1;
   margin-bottom: 8rpx;
   opacity: 0.3;
@@ -246,17 +246,17 @@
 
 .tagReligion {
   background: rgba(44, 82, 130, 0.08);
-  color: $primary-color;
+  color: $color-primary;
 }
 
 .tagCategory {
   background: rgba(197, 48, 48, 0.08);
-  color: $warm-red;
+  color: $color-warm;
 }
 
 .tagType {
   background: rgba(214, 158, 46, 0.08);
-  color: $warm-gold;
+  color: $color-gold;
 }
 
 .bottomBar {
@@ -286,17 +286,17 @@
 
   &.secondary {
     background: #F7FAFC;
-    color: $primary-color;
-    border: 2rpx solid $primary-color;
+    color: $color-primary;
+    border: 2rpx solid $color-primary;
   }
 
   &.warm {
-    background: $warm-gold;
+    background: $color-gold;
     color: #FFFFFF;
   }
 
   &.primary {
-    background: $primary-color;
+    background: $color-primary;
     color: #FFFFFF;
   }
 }

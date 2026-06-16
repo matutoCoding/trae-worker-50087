@@ -1,16 +1,16 @@
 @use '@/styles/variables.scss' as *;
 
 .card {
-  background: $color-bg-card;
-  border-radius: $radius-lg;
-  padding: $spacing-lg;
-  margin-bottom: $spacing-md;
-  box-shadow: $shadow-card;
-  transition: all $transition-base;
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  transition: all 0.3s;
 
   &:active {
     transform: scale(0.98);
-    box-shadow: $shadow-card-hover;
+    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
   }
 }
 
@@ -18,9 +18,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: $spacing-md;
-  padding-bottom: $spacing-md;
-  border-bottom: 2rpx solid $color-divider;
+  margin-bottom: 20rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 2rpx solid #EDF2F7;
 }
 
 .dateBox {
@@ -29,92 +29,109 @@
 }
 
 .date {
-  font-size: $font-size-md;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-  margin-right: $spacing-sm;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2D3748;
+  margin-right: 12rpx;
 }
 
 .weekday {
-  font-size: $font-size-sm;
-  color: $color-text-tertiary;
+  font-size: 24rpx;
+  color: #A0AEC0;
 }
 
 .content {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: 8rpx;
+  margin-bottom: 16rpx;
 }
 
 .deceased {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12rpx;
 }
 
 .name {
-  font-size: $font-size-xl;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-  margin-right: $spacing-sm;
-}
-
-.age {
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
-  font-weight: $font-weight-normal;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #2D3748;
 }
 
 .genderIcon {
-  font-size: $font-size-md;
-  color: $color-text-secondary;
+  font-size: 28rpx;
+  color: #4A5568;
+  font-weight: 500;
+}
+
+.age {
+  font-size: 26rpx;
+  color: #718096;
+  padding: 4rpx 16rpx;
+  background: #F7FAFC;
+  border-radius: 8rpx;
 }
 
 .meta {
   display: flex;
-  gap: $spacing-lg;
-  margin-top: $spacing-xs 0;
+  flex-wrap: wrap;
+  gap: 24rpx;
+  margin-bottom: 16rpx;
 }
 
 .time {
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
+  font-size: 26rpx;
+  color: #4A5568;
 }
 
 .hall {
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
+  font-size: 26rpx;
+  color: #4A5568;
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-sm;
-  margin: $spacing-sm 0;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
 }
 
 .tag {
-  padding: 6rpx 16rpx;
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  padding: 8rpx 20rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.tagReligion {
+  background: rgba(44, 82, 130, 0.08);
+  color: $color-primary;
+}
+
+.tagType {
+  background: rgba(197, 48, 48, 0.08);
+  color: $color-warm;
 }
 
 .footer {
   display: flex;
   justify-content: space-between;
-  margin-top: $spacing-md;
-  padding-top: $spacing-md;
-  border-top: 2rpx solid $color-divider;
+  align-items: center;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 2rpx solid #EDF2F7;
 }
 
 .family {
-  font-size: $font-size-sm;
-  color: $color-text-tertiary;
+  font-size: 24rpx;
+  color: #718096;
 }
 
 .amount {
-  font-size: $font-size-md;
-  font-weight: $font-weight-semibold;
+  font-size: 30rpx;
+  font-weight: 700;
   color: $color-warm;
 }
 
@@ -122,19 +139,31 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: $spacing-sm 0;
+  padding: 16rpx 0;
+}
+
+.freeLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
 }
 
 .freeText {
-  font-size: $font-size-md;
-  color: $color-text-secondary;
+  font-size: 30rpx;
+  color: #4A5568;
+  font-weight: 500;
+}
+
+.freeSub {
+  font-size: 24rpx;
+  color: #A0AEC0;
 }
 
 .freeTime {
-  padding: 8rpx 24rpx;
+  padding: 12rpx 28rpx;
   background: rgba(56, 161, 105, 0.1);
-  color: $color-success;
-  border-radius: $radius-round;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  color: #38A169;
+  border-radius: 48rpx;
+  font-size: 26rpx;
+  font-weight: 600;
 }
