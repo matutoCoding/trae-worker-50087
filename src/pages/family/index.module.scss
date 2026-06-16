@@ -1,0 +1,365 @@
+@import '@/styles/theme.scss';
+
+.container {
+  min-height: 100vh;
+  background: #F7FAFC;
+  padding: 24rpx;
+  padding-bottom: 160rpx;
+}
+
+.familySelector {
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.familyList {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.familyItem {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  border: 2rpx solid #E2E8F0;
+  transition: all 0.3s;
+
+  &.active {
+    border-color: $primary-color;
+    background: rgba(44, 82, 130, 0.05);
+  }
+}
+
+.familyAvatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $primary-color, #4299E1);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.familyInfo {
+  flex: 1;
+}
+
+.familyName {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2D3748;
+  margin-bottom: 6rpx;
+}
+
+.familyMeta {
+  font-size: 24rpx;
+  color: #718096;
+}
+
+.phoneIcon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: rgba(56, 161, 105, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.statCard {
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  padding: 24rpx 16rpx;
+  text-align: center;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.statNum {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $primary-color;
+  margin-bottom: 8rpx;
+}
+
+.statNum.warm {
+  color: $warm-red;
+}
+
+.statNum.gold {
+  color: $warm-gold;
+}
+
+.statLabel {
+  font-size: 22rpx;
+  color: #718096;
+}
+
+.card {
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.filterTabs {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 16rpx;
+  flex-wrap: wrap;
+}
+
+.filterTab {
+  padding: 12rpx 24rpx;
+  border-radius: 48rpx;
+  font-size: 24rpx;
+  color: #718096;
+  background: #F7FAFC;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+
+  &.active {
+    background: rgba(44, 82, 130, 0.1);
+    color: $primary-color;
+    border-color: $primary-color;
+  }
+}
+
+.requirementsList {
+  margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.reqItem {
+  display: flex;
+  align-items: flex-start;
+  padding: 16rpx 20rpx;
+  background: #F7FAFC;
+  border-radius: 12rpx;
+  border-left: 6rpx solid $primary-color;
+}
+
+.reqCheck {
+  margin-right: 12rpx;
+  margin-top: 2rpx;
+  color: $primary-color;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.reqText {
+  flex: 1;
+  font-size: 26rpx;
+  color: #4A5568;
+  line-height: 1.6;
+}
+
+.timeline {
+  margin-top: 16rpx;
+  position: relative;
+  padding-left: 40rpx;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 14rpx;
+  top: 8rpx;
+  bottom: 8rpx;
+  width: 4rpx;
+  background: #E2E8F0;
+}
+
+.timelineItem {
+  position: relative;
+  padding-bottom: 32rpx;
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.timelineDot {
+  position: absolute;
+  left: -34rpx;
+  top: 6rpx;
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  border: 4rpx solid #FFFFFF;
+  box-shadow: 0 0 0 2rpx $primary-color;
+  background: $primary-color;
+
+  &.call {
+    background: #3182CE;
+    box-shadow: 0 0 0 2rpx #3182CE;
+  }
+
+  &.message {
+    background: #38A169;
+    box-shadow: 0 0 0 2rpx #38A169;
+  }
+
+  &.meeting {
+    background: $warm-gold;
+    box-shadow: 0 0 0 2rpx $warm-gold;
+  }
+}
+
+.recordCard {
+  background: #F7FAFC;
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.recordHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.recordType {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+
+  &.call {
+    background: rgba(49, 130, 206, 0.1);
+    color: #3182CE;
+  }
+
+  &.message {
+    background: rgba(56, 161, 105, 0.1);
+    color: #38A169;
+  }
+
+  &.meeting {
+    background: rgba(214, 158, 46, 0.1);
+    color: $warm-gold;
+  }
+}
+
+.recordDate {
+  font-size: 22rpx;
+  color: #A0AEC0;
+}
+
+.recordContent {
+  font-size: 26rpx;
+  color: #4A5568;
+  line-height: 1.6;
+}
+
+.reminderList {
+  margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.reminderItem {
+  display: flex;
+  align-items: flex-start;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  background: rgba(197, 48, 48, 0.05);
+  border: 2rpx solid rgba(197, 48, 48, 0.2);
+}
+
+.reminderItem.done {
+  background: rgba(56, 161, 105, 0.05);
+  border-color: rgba(56, 161, 105, 0.2);
+}
+
+.reminderIcon {
+  font-size: 32rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+
+.reminderContent {
+  flex: 1;
+}
+
+.reminderText {
+  font-size: 26rpx;
+  color: #2D3748;
+  margin-bottom: 6rpx;
+  font-weight: 500;
+}
+
+.reminderTime {
+  font-size: 22rpx;
+  color: #718096;
+}
+
+.reminderAction {
+  font-size: 22rpx;
+  color: $warm-red;
+  font-weight: 500;
+}
+
+.reminderAction.done {
+  color: #38A169;
+}
+
+.bottomBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #FFFFFF;
+  padding: 20rpx 24rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 16rpx;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
+  z-index: 100;
+}
+
+.bottomBtn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  transition: all 0.3s;
+
+  &.primary {
+    background: $primary-color;
+    color: #FFFFFF;
+  }
+
+  &.warm {
+    background: $warm-gold;
+    color: #FFFFFF;
+  }
+}

@@ -1,0 +1,97 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.cover {
+  position: relative;
+  width: 100%;
+  height: 300rpx;
+}
+
+.coverImg {
+  width: 100%;
+  height: 100%;
+}
+
+.coverOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%);
+}
+
+.categoryBadge {
+  position: absolute;
+  top: $spacing-sm;
+  left: $spacing-sm;
+  padding: 6rpx 16rpx;
+  background: rgba(255,255,255,0.9);
+  color: $color-primary;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  border-radius: $radius-sm;
+}
+
+.ratingBadge {
+  position: absolute;
+  top: $spacing-sm;
+  right: $spacing-sm;
+  padding: 6rpx 16rpx;
+  background: rgba(214, 158, 46, 0.9);
+  color: $color-text-white;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  border-radius: $radius-sm;
+}
+
+.content {
+  padding: $spacing-md $spacing-lg $spacing-lg;
+}
+
+.title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: $spacing-sm;
+  @include text-ellipsis;
+}
+
+.summary {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: $spacing-md;
+}
+
+.meta {
+  display: flex;
+  gap: $spacing-lg;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+}
+
+.metaText {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}

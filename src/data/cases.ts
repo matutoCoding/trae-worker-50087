@@ -1,0 +1,157 @@
+import { CaseItem } from '@/types';
+
+export const mockCases: CaseItem[] = [
+  {
+    id: 'case001',
+    title: '资深教师桃李满天下追思会',
+    category: 'modern',
+    coverImage: 'https://picsum.photos/id/103/750/500',
+    summary: '为退休中学李老师举办的现代追思会，加入了历届学生的视频祝福环节，感动全场。',
+    date: '2026-06-10',
+    location: '市殡仪馆追思厅B',
+    religion: 'none',
+    deceasedName: '李秀英',
+    age: 78,
+    ceremonyFlow: ['入场默哀', '学生代表致辞', '生平视频播放', '同事追忆', '家属致谢', '鲜花告别'],
+    highlights: ['组织200余名历届学生参加', '制作40年教学生平纪念视频', '学生代表朗读原创诗歌', '设置"师生情"签名墙'],
+    rating: 5.0,
+    familyFeedback: '非常感谢司仪团队的精心安排，让母亲的告别仪式温馨而有意义。学生们的到来让母亲在天之灵一定倍感欣慰。',
+    views: 1256,
+    favorites: 89
+  },
+  {
+    id: 'case002',
+    title: '佛教传统超度法会',
+    category: 'religious',
+    coverImage: 'https://picsum.photos/id/1044/750/500',
+    summary: '为张老先生举办的完整佛教超度仪式，邀请寺庙12位僧人主持诵经法会。',
+    date: '2026-06-08',
+    location: '市殡仪馆追思厅A',
+    religion: 'buddhism',
+    deceasedName: '张建国',
+    age: 82,
+    ceremonyFlow: ['请灵安位', '僧人诵经', '供灯祈福', '放生回向', '瞻仰遗容', '佛号相送'],
+    highlights: ['邀请古寺12位僧人主法', '设置49盏祈福莲灯', '举行放生回向善事', '安排七七四十九天后续法事'],
+    rating: 4.9,
+    familyFeedback: '法会如法如律，庄严肃穆。师父们的诵经让全家人都感受到了心灵的平静，相信父亲已得往生净土。',
+    views: 987,
+    favorites: 76
+  },
+  {
+    id: 'case003',
+    title: '退役军人荣誉告别式',
+    category: 'customized',
+    coverImage: 'https://picsum.photos/id/1025/750/500',
+    summary: '为参加过抗美援朝的刘老英雄举办的荣誉告别仪式，融入军事礼仪元素。',
+    date: '2026-06-05',
+    location: '市殡仪馆追思厅C',
+    religion: 'none',
+    deceasedName: '刘国栋',
+    age: 92,
+    ceremonyFlow: ['国旗覆盖仪式', '军歌演奏', '军功章展示', '战友追忆', '鸣枪致敬', '军旗告别'],
+    highlights: ['协调退役军人事务局出席', '安排军乐队现场演奏', '制作军功章荣誉展柜', '组织老兵战友方阵出席'],
+    rating: 5.0,
+    familyFeedback: '父亲戎马一生，能以军人的荣誉告别，是他最好的归宿。感谢司仪团队细致入微的安排。',
+    views: 2103,
+    favorites: 156
+  },
+  {
+    id: 'case004',
+    title: '基督教追思礼拜',
+    category: 'religious',
+    coverImage: 'https://picsum.photos/id/1018/750/500',
+    summary: '为王弟兄举办的基督教追思礼拜，由教会牧师主持，诗班献唱，充满复活盼望。',
+    date: '2026-06-02',
+    location: '市基督教堂',
+    religion: 'christianity',
+    deceasedName: '王德福',
+    age: 75,
+    ceremonyFlow: ['唱诗入场', '开场祷告', '诵读经文', '追思证道', '家属分享', '祝福差遣'],
+    highlights: ['安排16人诗班献唱', '布置鲜花十字架祭坛', '制作天国主题纪念册', '教会教友集体祷告'],
+    rating: 4.8,
+    familyFeedback: '整个追思礼拜庄严而充满盼望，让我们感受到父亲在天家的美好安息。感谢每一位的付出。',
+    views: 756,
+    favorites: 58
+  },
+  {
+    id: 'case005',
+    title: '企业家海葬追思典礼',
+    category: 'customized',
+    coverImage: 'https://picsum.photos/id/1036/750/500',
+    summary: '为知名企业家陈先生举办的海上追思活动，骨灰撒入大海，回归自然。',
+    date: '2026-05-28',
+    location: '东海海域',
+    religion: 'none',
+    deceasedName: '陈海天',
+    age: 68,
+    ceremonyFlow: ['码头集合', '出海仪式', '骨灰撒海', '鲜花祭奠', '放飞心愿气球', '返航追思'],
+    highlights: ['协调海葬专用船只', '安排专业海事礼仪', '制作航海主题纪念视频', '提供亲属往返交通'],
+    rating: 4.9,
+    familyFeedback: '父亲一生热爱大海，海葬是他的遗愿。这次海上追思仪式庄重而诗意，让我们和父亲做了最美的告别。',
+    views: 1567,
+    favorites: 112
+  },
+  {
+    id: 'case006',
+    title: '传统道教超度法事',
+    category: 'traditional',
+    coverImage: 'https://picsum.photos/id/1082/750/500',
+    summary: '为陈老太举办的全套道教超度法事，破狱、炼度、送仙，谨遵古制。',
+    date: '2026-05-25',
+    location: '市殡仪馆追思厅A',
+    religion: 'taoism',
+    deceasedName: '陈美华',
+    age: 88,
+    ceremonyFlow: ['请神安位', '诵经礼忏', '破狱科仪', '炼度亡魂', '拜别送行', '送神回驾'],
+    highlights: ['邀请8位老道长主持', '搭设传统道教科仪坛场', '全套纸质法事用品', '安排五七、百日后续道场'],
+    rating: 4.7,
+    familyFeedback: '母亲一生信奉道教，按照传统科仪为她送行是我们最大的心愿。道长们的法事如法，我们全家安心。',
+    views: 834,
+    favorites: 67
+  },
+  {
+    id: 'case007',
+    title: '天主教殡葬弥撒',
+    category: 'religious',
+    coverImage: 'https://picsum.photos/id/1039/750/500',
+    summary: '为孙老先生举办的天主教殡葬弥撒，由本堂神父主持，遵行圣教会礼仪。',
+    date: '2026-05-22',
+    location: '市天主堂',
+    religion: 'catholicism',
+    deceasedName: '孙志明',
+    age: 80,
+    ceremonyFlow: ['弥撒开始', '圣道礼仪', '圣祭礼仪', '领圣体', '告别礼', '安葬祈祷'],
+    highlights: ['协调天主堂神父主持', '准备全套弥撒礼仪用品', '安排教友唱经班', '墓地安葬仪式衔接'],
+    rating: 4.9,
+    familyFeedback: '感谢你们帮助我们按照教会的礼仪送别父亲。弥撒庄严神圣，父亲一定安息在主的怀中。',
+    views: 678,
+    favorites: 45
+  },
+  {
+    id: 'case008',
+    title: '百岁老人寿终正寝喜丧',
+    category: 'traditional',
+    coverImage: 'https://picsum.photos/id/64/750/500',
+    summary: '为百岁赵老太举办的传统喜丧仪式，五世同堂，福寿圆满。',
+    date: '2026-05-18',
+    location: '家中老宅',
+    religion: 'buddhism',
+    deceasedName: '赵玉兰',
+    age: 101,
+    ceremonyFlow: ['寿终正寝礼', '入殓仪式', '念经超度', '家奠公奠', '出殡仪式', '圆满安葬'],
+    highlights: ['传统中式寿堂布置', '安排五世同堂跪拜礼', '定制百岁寿星寿材', '发放福寿碗给亲友'],
+    rating: 5.0,
+    familyFeedback: '奶奶百岁高寿，喜丧圆满。传统仪式办得非常到位，亲友们都说老人家走得风光体面。',
+    views: 1892,
+    favorites: 134
+  }
+];
+
+export const getCasesByCategory = (category: string): CaseItem[] => {
+  if (category === 'all') return mockCases;
+  return mockCases.filter(c => c.category === category);
+};
+
+export const getCaseById = (id: string): CaseItem | undefined => {
+  return mockCases.find(c => c.id === id);
+};

@@ -1,0 +1,90 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  padding: $spacing-md $page-padding 160rpx;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FAF5FF 0%, $color-bg-page 300rpx);
+}
+
+.searchBox {
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  padding: $spacing-md $spacing-lg;
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.searchIcon {
+  font-size: $font-size-lg;
+  margin-right: $spacing-sm;
+  color: $color-text-tertiary;
+}
+
+.searchInput {
+  flex: 1;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  background: transparent;
+}
+
+.categoryRow {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+  overflow-x: auto;
+  @include scroll-x-container;
+}
+
+.categoryItem {
+  @include scroll-x-item(auto);
+  padding: 12rpx 28rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  background: $color-bg-card;
+  white-space: nowrap;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+  margin-right: $spacing-sm;
+  display: inline-block;
+  box-shadow: $shadow-card;
+
+  &.active {
+    background: rgba(44, 82, 130, 0.1);
+    color: $color-primary;
+    border-color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.statsCard {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  display: flex;
+  justify-content: space-around;
+  box-shadow: $shadow-card;
+}
+
+.statsItem {
+  text-align: center;
+  color: $color-text-white;
+}
+
+.statsNum {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+}
+
+.statsLabel {
+  font-size: $font-size-xs;
+  opacity: 0.9;
+  margin-top: 4rpx;
+}
+
+.listEmpty {
+  margin-top: $spacing-xl;
+}

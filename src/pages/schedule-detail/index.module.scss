@@ -1,0 +1,202 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  padding: $spacing-md $page-padding 200rpx;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #EBF4FF 0%, $color-bg-page 300rpx);
+}
+
+.headerCard {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  color: $color-text-white;
+  box-shadow: $shadow-card;
+}
+
+.deceasedName {
+  font-size: 48rpx;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-xs;
+}
+
+.deceasedMeta {
+  font-size: $font-size-md;
+  opacity: 0.9;
+  margin-bottom: $spacing-md;
+}
+
+.infoRow {
+  display: flex;
+  gap: $spacing-lg;
+  font-size: $font-size-sm;
+  opacity: 0.9;
+}
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.sectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: flex;
+  align-items: center;
+}
+
+.sectionIcon {
+  margin-right: $spacing-sm;
+  font-size: $font-size-lg;
+}
+
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.infoItem {
+  display: flex;
+}
+
+.infoLabel {
+  width: 160rpx;
+  flex-shrink: 0;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.infoValue {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: $line-height-normal;
+}
+
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.tag {
+  padding: 8rpx 20rpx;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  background: rgba(44, 82, 130, 0.08);
+  color: $color-primary;
+}
+
+.tagWarm {
+  background: rgba(197, 48, 48, 0.08);
+  color: $color-warm;
+}
+
+.tagGold {
+  background: rgba(214, 158, 46, 0.1);
+  color: $color-gold;
+}
+
+.familyContact {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md;
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-sm;
+}
+
+.familyAvatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, $color-primary-light 0%, $color-primary 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-lg;
+  margin-right: $spacing-md;
+  flex-shrink: 0;
+}
+
+.familyInfo {
+  flex: 1;
+}
+
+.familyName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.familyRel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.phoneBtn {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-round;
+  background: $color-success;
+  color: $color-text-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  @include button-reset;
+}
+
+.bottomBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  background: $color-bg-card;
+  box-shadow: 0 -4rpx 16rpx rgba(0,0,0,0.06);
+  display: flex;
+  gap: $spacing-md;
+}
+
+.bottomBtn {
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  @include button-reset;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &.primary {
+    background: $color-primary;
+    color: $color-text-white;
+  }
+
+  &.secondary {
+    background: $color-bg-hover;
+    color: $color-text-primary;
+  }
+
+  &.warm {
+    background: $color-warm;
+    color: $color-text-white;
+  }
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}

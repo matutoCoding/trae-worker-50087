@@ -1,0 +1,204 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  padding: $spacing-md $page-padding 200rpx;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FDF6EC 0%, $color-bg-page 300rpx);
+}
+
+.formCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.formItem {
+  margin-bottom: $spacing-md;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.formLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.formInput {
+  width: 100%;
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.formRow {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.formRowItem {
+  flex: 1;
+}
+
+.categoryTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+}
+
+.categoryTab {
+  padding: 12rpx 24rpx;
+  border-radius: $radius-round;
+  background: $color-bg-hover;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-primary;
+    color: $color-text-white;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.templateCard {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  box-shadow: $shadow-card;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+
+  &.selected {
+    border-color: $color-primary;
+    background: rgba(44, 82, 130, 0.03);
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+}
+
+.templateTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.templateSuitable {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.templatePreview {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.editorArea {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.editorTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.editorContent {
+  min-height: 600rpx;
+  width: 100%;
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  line-height: $line-height-loose;
+  box-sizing: border-box;
+}
+
+.toolbar {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.toolBtn {
+  padding: 10rpx 20rpx;
+  background: $color-bg-hover;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  @include button-reset;
+  display: inline-flex;
+
+  &:active {
+    background: $color-border;
+  }
+}
+
+.bottomBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  background: $color-bg-card;
+  box-shadow: 0 -4rpx 16rpx rgba(0,0,0,0.06);
+  display: flex;
+  gap: $spacing-md;
+}
+
+.bottomBtn {
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  @include button-reset;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+
+  &.primary {
+    background: $color-primary;
+    color: $color-text-white;
+  }
+
+  &.secondary {
+    background: $color-bg-hover;
+    color: $color-text-primary;
+  }
+
+  &.warm {
+    background: $color-warm;
+    color: $color-text-white;
+  }
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}

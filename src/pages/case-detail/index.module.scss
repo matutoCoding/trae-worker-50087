@@ -1,0 +1,302 @@
+@import '@/styles/theme.scss';
+
+.container {
+  min-height: 100vh;
+  background: #F7FAFC;
+  padding-bottom: 160rpx;
+}
+
+.coverImage {
+  width: 100%;
+  height: 400rpx;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+
+.coverOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(44, 82, 130, 0.2) 0%, rgba(44, 82, 130, 0.85) 100%);
+}
+
+.coverContent {
+  position: absolute;
+  left: 24rpx;
+  right: 24rpx;
+  bottom: 32rpx;
+  color: #FFFFFF;
+}
+
+.coverCategory {
+  display: inline-block;
+  padding: 8rpx 20rpx;
+  border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  font-size: 22rpx;
+  font-weight: 500;
+  margin-bottom: 16rpx;
+}
+
+.coverTitle {
+  font-size: 40rpx;
+  font-weight: 700;
+  margin-bottom: 12rpx;
+  line-height: 1.3;
+}
+
+.coverMeta {
+  display: flex;
+  gap: 24rpx;
+  font-size: 24rpx;
+  opacity: 0.9;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.card {
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.infoCell {
+  padding: 16rpx;
+  background: #F7FAFC;
+  border-radius: 12rpx;
+}
+
+.infoLabel {
+  font-size: 22rpx;
+  color: #718096;
+  margin-bottom: 6rpx;
+}
+
+.infoValue {
+  font-size: 26rpx;
+  color: #2D3748;
+  font-weight: 600;
+}
+
+.ratingRow {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  background: linear-gradient(135deg, rgba(214, 158, 46, 0.08) 0%, rgba(236, 201, 75, 0.08) 100%);
+  border-radius: 12rpx;
+  margin-top: 16rpx;
+}
+
+.ratingStars {
+  font-size: 40rpx;
+  color: $warm-gold;
+  letter-spacing: 6rpx;
+  margin-right: 16rpx;
+}
+
+.ratingScore {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $warm-gold;
+  margin-right: 8rpx;
+}
+
+.ratingLabel {
+  font-size: 24rpx;
+  color: #975A16;
+}
+
+.summaryText {
+  font-size: 28rpx;
+  color: #4A5568;
+  line-height: 1.8;
+  margin-top: 16rpx;
+}
+
+.flowList {
+  margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.flowItem {
+  display: flex;
+  align-items: flex-start;
+  padding: 20rpx;
+  background: linear-gradient(135deg, rgba(44, 82, 130, 0.03) 0%, rgba(66, 153, 225, 0.03) 100%);
+  border-radius: 12rpx;
+  border: 2rpx solid rgba(44, 82, 130, 0.08);
+}
+
+.flowIndex {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: $primary-color;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+
+.flowText {
+  flex: 1;
+  font-size: 28rpx;
+  color: #2D3748;
+  font-weight: 500;
+  padding-top: 8rpx;
+}
+
+.highlightsList {
+  margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.highlightItem {
+  display: flex;
+  align-items: flex-start;
+  padding: 20rpx;
+  background: rgba(56, 161, 105, 0.05);
+  border-radius: 12rpx;
+  border-left: 6rpx solid #38A169;
+}
+
+.highlightIcon {
+  font-size: 32rpx;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+}
+
+.highlightText {
+  flex: 1;
+  font-size: 26rpx;
+  color: #276749;
+  line-height: 1.6;
+}
+
+.feedbackCard {
+  padding: 24rpx;
+  background: linear-gradient(135deg, rgba(44, 82, 130, 0.05) 0%, rgba(66, 153, 225, 0.05) 100%);
+  border-radius: 12rpx;
+  margin-top: 16rpx;
+  border: 2rpx solid rgba(44, 82, 130, 0.1);
+}
+
+.feedbackQuote {
+  font-size: 48rpx;
+  color: $primary-color;
+  line-height: 1;
+  margin-bottom: 8rpx;
+  opacity: 0.3;
+}
+
+.feedbackText {
+  font-size: 26rpx;
+  color: #4A5568;
+  line-height: 1.8;
+  padding: 0 8rpx;
+}
+
+.feedbackAuthor {
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 2rpx solid rgba(44, 82, 130, 0.1);
+  font-size: 24rpx;
+  color: #718096;
+  text-align: right;
+}
+
+.tagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.tagChip {
+  padding: 12rpx 20rpx;
+  border-radius: 32rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.tagReligion {
+  background: rgba(44, 82, 130, 0.08);
+  color: $primary-color;
+}
+
+.tagCategory {
+  background: rgba(197, 48, 48, 0.08);
+  color: $warm-red;
+}
+
+.tagType {
+  background: rgba(214, 158, 46, 0.08);
+  color: $warm-gold;
+}
+
+.bottomBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #FFFFFF;
+  padding: 20rpx 24rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 16rpx;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
+  z-index: 100;
+}
+
+.bottomBtn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  transition: all 0.3s;
+
+  &.secondary {
+    background: #F7FAFC;
+    color: $primary-color;
+    border: 2rpx solid $primary-color;
+  }
+
+  &.warm {
+    background: $warm-gold;
+    color: #FFFFFF;
+  }
+
+  &.primary {
+    background: $primary-color;
+    color: #FFFFFF;
+  }
+}

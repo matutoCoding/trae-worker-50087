@@ -1,0 +1,126 @@
+@use '@/styles/variables.scss' as *;
+
+.timeline {
+  padding: $spacing-sm 0;
+}
+
+.stepItem {
+  display: flex;
+  position: relative;
+  padding-bottom: $spacing-lg;
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+
+  &.last .line {
+    display: none;
+  }
+
+  &.completed {
+    .title {
+      color: $color-text-primary;
+    }
+
+    .description {
+      color: $color-text-secondary;
+    }
+  }
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: $spacing-md;
+  flex-shrink: 0;
+}
+
+.dot {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: $radius-round;
+  background: $color-bg-hover;
+  color: $color-text-secondary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  flex-shrink: 0;
+
+  &.dotCompleted {
+    background: $color-success;
+    color: $color-text-white;
+  }
+}
+
+.line {
+  width: 4rpx;
+  flex: 1;
+  min-height: 60rpx;
+  background: $color-border;
+  margin: $spacing-xs 0;
+}
+
+.content {
+  flex: 1;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.duration {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  background: rgba(44, 82, 130, 0.1);
+  padding: 4rpx 16rpx;
+  border-radius: $radius-sm;
+}
+
+.description {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+  margin-bottom: $spacing-sm;
+}
+
+.tips {
+  margin-top: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: #FFFBEB;
+  border-radius: $radius-sm;
+  border-left: 6rpx solid $color-gold;
+}
+
+.tipsText {
+  font-size: $font-size-xs;
+  color: $color-gold;
+  line-height: $line-height-normal;
+}
+
+.music {
+  margin-top: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: #EBF8FF;
+  border-radius: $radius-sm;
+}
+
+.musicText {
+  font-size: $font-size-xs;
+  color: $color-info;
+}

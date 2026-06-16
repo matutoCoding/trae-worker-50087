@@ -1,0 +1,140 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: $shadow-card-hover;
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 2rpx solid $color-divider;
+}
+
+.dateBox {
+  display: flex;
+  align-items: baseline;
+}
+
+.date {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-right: $spacing-sm;
+}
+
+.weekday {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.deceased {
+  display: flex;
+  align-items: center;
+}
+
+.name {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-right: $spacing-sm;
+}
+
+.age {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: $font-weight-normal;
+}
+
+.genderIcon {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+}
+
+.meta {
+  display: flex;
+  gap: $spacing-lg;
+  margin-top: $spacing-xs 0;
+}
+
+.time {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.hall {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin: $spacing-sm 0;
+}
+
+.tag {
+  padding: 6rpx 16rpx;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 2rpx solid $color-divider;
+}
+
+.family {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.amount {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-warm;
+}
+
+.freeContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-sm 0;
+}
+
+.freeText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+}
+
+.freeTime {
+  padding: 8rpx 24rpx;
+  background: rgba(56, 161, 105, 0.1);
+  color: $color-success;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}

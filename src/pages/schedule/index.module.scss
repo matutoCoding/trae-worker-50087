@@ -1,0 +1,231 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  padding: $spacing-md $page-padding 160rpx;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #EBF4FF 0%, $color-bg-page 300rpx);
+}
+
+.statsRow {
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.statsCard {
+  flex: 1;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.statsValue {
+  font-size: 56rpx;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+  line-height: 1.2;
+}
+
+.statsLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-top: $spacing-xs;
+}
+
+.ongoingCard {
+  background: linear-gradient(135deg, $color-gold 0%, #ED8936 100%);
+
+  .statsValue {
+    color: $color-text-white;
+  }
+
+  .statsLabel {
+    color: rgba(255,255,255,0.9);
+  }
+}
+
+.freeCard {
+  .statsValue {
+    color: $color-success;
+  }
+}
+
+.filterBar {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+  padding: $spacing-sm;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  overflow-x: auto;
+  @include scroll-x-container;
+}
+
+.filterItem {
+  @include scroll-x-item(auto);
+  padding: 12rpx 24rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  background: $color-bg-hover;
+  white-space: nowrap;
+  transition: all $transition-base;
+  margin-right: $spacing-sm;
+  display: inline-block;
+
+  &.active {
+    background: $color-primary;
+    color: $color-text-white;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.calendarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: $color-bg-card;
+  padding: $spacing-md $spacing-lg;
+  border-radius: $radius-lg $radius-lg 0 0;
+  box-shadow: $shadow-card;
+}
+
+.monthText {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.navBtn {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: $radius-round;
+  background: $color-bg-hover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-secondary;
+  font-size: $font-size-lg;
+
+  &:active {
+    background: $color-border;
+  }
+}
+
+.calendar {
+  background: $color-bg-card;
+  padding: $spacing-md $spacing-lg $spacing-lg;
+  border-radius: 0 0 $radius-lg $radius-lg;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-lg;
+}
+
+.weekRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: $spacing-sm;
+}
+
+.weekDay {
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  padding: $spacing-sm 0;
+  font-weight: $font-weight-medium;
+}
+
+.daysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: $spacing-xs;
+}
+
+.dayItem {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-md;
+  position: relative;
+  transition: all $transition-base;
+
+  &.empty {
+    opacity: 0;
+  }
+
+  &.otherMonth {
+    opacity: 0.3;
+  }
+
+  &.today {
+    background: $color-primary;
+    color: $color-text-white;
+
+    .dayNum {
+      color: $color-text-white;
+      font-weight: $font-weight-semibold;
+    }
+  }
+
+  &.hasSchedule {
+    background: rgba(49, 130, 206, 0.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.dayNum {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  line-height: 1.2;
+}
+
+.dayDots {
+  position: absolute;
+  bottom: 8rpx;
+  display: flex;
+  gap: 4rpx;
+}
+
+.dayDot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: $radius-round;
+  background: $color-booked;
+}
+
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.listTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.addBtn {
+  padding: 12rpx 24rpx;
+  background: $color-primary;
+  color: $color-text-white;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  @include button-reset;
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
