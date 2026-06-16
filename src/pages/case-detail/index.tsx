@@ -6,11 +6,13 @@ import classnames from 'classnames';
 import SectionHeader from '@/components/SectionHeader';
 import { getCaseById } from '@/data/cases';
 import { CaseItem } from '@/types';
+import { useAppStore } from '@/store/AppContext';
 import { formatDateCN, getCategoryText, getReligionText, renderStars } from '@/utils';
 
 const CaseDetailPage: React.FC = () => {
   const router = useRouter();
   const id = router.params.id || 'case001';
+  const { setCasePlan } = useAppStore();
   const [caseData, setCaseData] = useState<CaseItem | null>(null);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
 
@@ -158,8 +160,25 @@ const CaseDetailPage: React.FC = () => {
         <View
           className={classnames(styles.bottomBtn, styles.primary)}
           onClick={() => {
-            Taro.showToast({ title: '已套用此方案', icon: 'success' });
-            setTimeout(() => Taro.switchTab({ url: '/pages/ceremony/index' }), 1000);
+            if (!caseData) return;
+            Taro.showModal({
+              title: '套用案例方案',
+              content: `将把「${caseData.title}」的流程和亮点应用到追思仪式？`,
+              confirmText: '确认套用',
+              success: (res) => {
+                if (res.confirm) {
+                  setCasePlan({
+                    caseId: caseData.id,
+                    caseTitle: caseData.title,
+                    flow: caseData.ceremonyFlow,
+                    highlights: caseData.highlights,
+                    religion: caseData.religion
+                  });
+                  Taro.showToast({ title: '方案已套用', icon: 'success' });
+                  setTimeout(() => Taro.switchTab({ url: '/pages/ceremony/index' }), 1000);
+                }
+              }
+            });
           }}
         >
           📋 套用方案

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text } from '@tarojs/components';
 import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
@@ -6,29 +6,99 @@ import classnames from 'classnames';
 import StatusBadge from '@/components/StatusBadge';
 import SectionHeader from '@/components/SectionHeader';
 import { ScheduleItem } from '@/types';
-import { getScheduleById } from '@/data/schedule';
+import { useAppStore } from '@/store/AppContext';
 import { getFamilyByScheduleId } from '@/data/family';
 import { formatDateCN, getWeekDay, getReligionText, formatMoney } from '@/utils';
 
 const ScheduleDetailPage: React.FC = () => {
   const router = useRouter();
   const id = router.params.id || 's001';
+  const {
+    schedules,
+    updateScheduleStatus,
+    setCurrentScheduleId,
+    setReligionFromSchedule
+  } = useAppStore();
   const [schedule, setSchedule] = useState<ScheduleItem | null>(null);
 
-  useDidShow(() => {
-    console.log('[ScheduleDetailPage] 页面显示，档期ID:', id);
-    const data = getScheduleById(id);
+  const refreshSchedule = () => {
+    const data = schedules.find(s => s.id === id);
     if (data) {
       setSchedule(data);
+      // 自动设置当前档期，供追思流程页使用
+      setCurrentScheduleId(data.id);
+      setReligionFromSchedule(data.religion);
     } else {
       Taro.showToast({ title: '档期不存在', icon: 'error' });
     }
+  };
+
+  useDidShow(() => {
+    console.log('[ScheduleDetailPage] 页面显示，档期ID:', id);
+    refreshSchedule();
   });
 
   if (!schedule) return null;
 
   const family = getFamilyByScheduleId(schedule.id);
   const genderText = schedule.gender === 'male' ? '先生' : '女士';
+
+  // 开始仪式：booked → ongoing
+  const handleStart = () => {
+    Taro.showModal({
+      title: '开始仪式',
+      content: `确认开始 ${schedule.deceasedName}${genderText} 的告别仪式吗？\n开始后将自动进入追思流程页面。`,
+      confirmText: '开始仪式',
+      success: (res) => {
+        if (res.confirm) {
+          updateScheduleStatus(schedule.id, 'ongoing');
+          Taro.showToast({ title: '仪式已开始', icon: 'success' });
+          setTimeout(() => {
+            refreshSchedule();
+            // 自动跳转到追思流程
+            Taro.switchTab({ url: '/pages/ceremony/index' });
+          }, 800);
+        }
+      }
+    });
+  };
+
+  // 完成仪式：ongoing → completed，并引导去结算
+  const handleComplete = () => {
+    Taro.showModal({
+      title: '完成仪式',
+      content: `确认 ${schedule.deceasedName}${genderText} 的告别仪式已圆满完成吗？\n完成后可进入结算流程。`,
+      confirmText: '已完成',
+      confirmColor: '#C53030',
+      success: (res) => {
+        if (res.confirm) {
+          updateScheduleStatus(schedule.id, 'completed');
+          Taro.showToast({ title: '仪式圆满完成', icon: 'success' });
+          setTimeout(() => {
+            refreshSchedule();
+            Taro.showModal({
+              title: '🎉 服务完成',
+              content: `仪式已完成，服务费用 ${schedule.amount ? formatMoney(schedule.amount) : '待确认'}\n是否立即前往查看结算？`,
+              confirmText: '去结算',
+              cancelText: '稍后再说',
+              success: (r2) => {
+                if (r2.confirm) {
+                  Taro.navigateTo({ url: '/pages/settlement/index' });
+                }
+              }
+            });
+          }, 1000);
+        }
+      }
+    });
+  };
+
+  // 去追思流程页
+  const goCeremony = () => {
+    setCurrentScheduleId(schedule.id);
+    setReligionFromSchedule(schedule.religion);
+    Taro.switchTab({ url: '/pages/ceremony/index' });
+  };
 
   return (
     <View className={styles.container}>
@@ -91,7 +161,10 @@ const ScheduleDetailPage: React.FC = () => {
       </View>
 
       <View className={styles.card}>
-        <SectionHeader title="家属联系人" extra={<Text style={{ color: '#2C5282', fontSize: 24 }}>查看沟通记录 ›</Text>} />
+        <SectionHeader
+          title="家属联系人"
+          extra={<Text style={{ color: '#2C5282', fontSize: 24 }}>查看沟通记录 ›</Text>}
+        />
         {family && (
           <View
             className={styles.familyContact}
@@ -133,7 +206,7 @@ const ScheduleDetailPage: React.FC = () => {
         <View style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginTop: 16 }}>
           {[
             { icon: '📝', label: '悼词撰写', onClick: () => Taro.navigateTo({ url: '/pages/eulogy/index' }) },
-            { icon: '⚙️', label: '仪式流程', onClick: () => Taro.switchTab({ url: '/pages/ceremony/index' }) },
+            { icon: '⚙️', label: '仪式流程', onClick: goCeremony },
             { icon: '⛪', label: '宗教适配', onClick: () => Taro.navigateTo({ url: '/pages/religion/index' }) }
           ].map((action, idx) => (
             <View
@@ -155,6 +228,76 @@ const ScheduleDetailPage: React.FC = () => {
         </View>
       </View>
 
+      {/* 状态流程说明 */}
+      {schedule.status !== 'completed' && (
+        <View className={styles.card}>
+          <SectionHeader title="当前进度" />
+          <View style={{ display: 'flex', marginTop: 16, alignItems: 'center', gap: 8 }}>
+            {[
+              { label: '已预约', status: 'booked', icon: '📋' },
+              { label: '进行中', status: 'ongoing', icon: '▶️' },
+              { label: '已完成', status: 'completed', icon: '✅' }
+            ].map((step, idx) => {
+              const order = ['booked', 'ongoing', 'completed'];
+              const curIdx = order.indexOf(schedule.status);
+              const stepIdx = order.indexOf(step.status);
+              const isDone = stepIdx < curIdx || schedule.status === step.status;
+              const isActive = schedule.status === step.status;
+              return (
+                <View key={step.status} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                  <View
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      flex: 1
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: 28,
+                        background: isActive ? '#D69E2E' : isDone ? '#38A169' : '#E2E8F0',
+                        color: isActive || isDone ? '#fff' : '#718096',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 24,
+                        fontWeight: 600,
+                        marginBottom: 8
+                      }}
+                    >
+                      {step.icon}
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: 22,
+                        color: isActive ? '#D69E2E' : isDone ? '#38A169' : '#A0AEC0',
+                        fontWeight: isActive || isDone ? 600 : 400
+                      }}
+                    >
+                      {step.label}
+                    </Text>
+                  </View>
+                  {idx < 2 && (
+                    <View
+                      style={{
+                        height: 4,
+                        flex: 1,
+                        background: stepIdx < curIdx ? '#38A169' : '#E2E8F0',
+                        borderRadius: 2,
+                        margin: '0 8rpx 32rpx 8rpx'
+                      }}
+                    />
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
+
       <View className={styles.bottomBar}>
         <View
           className={classnames(styles.bottomBtn, styles.secondary)}
@@ -165,7 +308,7 @@ const ScheduleDetailPage: React.FC = () => {
         {schedule.status === 'booked' && (
           <View
             className={classnames(styles.bottomBtn, styles.primary)}
-            onClick={() => Taro.showToast({ title: '仪式开始', icon: 'success' })}
+            onClick={handleStart}
           >
             ▶ 开始仪式
           </View>
@@ -173,9 +316,9 @@ const ScheduleDetailPage: React.FC = () => {
         {schedule.status === 'ongoing' && (
           <View
             className={classnames(styles.bottomBtn, styles.warm)}
-            onClick={() => Taro.showToast({ title: '已完成仪式', icon: 'success' })}
+            onClick={handleComplete}
           >
-            ✓ 完成
+            ✓ 完成仪式
           </View>
         )}
         {schedule.status === 'completed' && (

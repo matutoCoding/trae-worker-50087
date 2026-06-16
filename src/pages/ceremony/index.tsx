@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Image, Input, ScrollView } from '@tarojs/components';
 import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro';
 import styles from './index.module.scss';
@@ -6,8 +6,9 @@ import classnames from 'classnames';
 import SectionHeader from '@/components/SectionHeader';
 import StepTimeline from '@/components/StepTimeline';
 import EmptyState from '@/components/EmptyState';
-import { CeremonyStep, MusicItem } from '@/types';
+import { CeremonyStep, MusicItem, ReligionType } from '@/types';
 import { mockCeremonySteps, mockMusicList } from '@/data/ceremony';
+import { useAppStore } from '@/store/AppContext';
 import { getReligionText } from '@/utils';
 
 type TabType = 'flow' | 'music' | 'video' | 'rehearsal' | 'record';
@@ -18,19 +19,98 @@ interface EmergencyRecord {
   content: string;
 }
 
+interface CustomStep {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
+  order: number;
+  completed: boolean;
+}
+
 const CeremonyPage: React.FC = () => {
+  const {
+    getCurrentSchedule,
+    religionFromSchedule,
+    casePlanData,
+    clearCasePlan
+  } = useAppStore();
+
   const [activeTab, setActiveTab] = useState<TabType>('flow');
-  const [currentReligion] = useState<string>('buddhism');
-  const [steps, setSteps] = useState<CeremonyStep[]>(mockCeremonySteps['buddhism'] || []);
+  const [currentReligion, setCurrentReligion] = useState<ReligionType>('buddhism');
+  const [steps, setSteps] = useState<(CeremonyStep | CustomStep)[]>([]);
   const [playingMusic, setPlayingMusic] = useState<string>('');
   const [records, setRecords] = useState<EmergencyRecord[]>([
     { id: '1', time: '09:15', content: '家属情绪波动较大，已安排家属休息室并提供心理疏导。' },
     { id: '2', time: '09:45', content: '音响设备出现短暂故障，已切换备用设备，仪式延后2分钟。' }
   ]);
   const [recordInput, setRecordInput] = useState('');
+  const [caseApplied, setCaseApplied] = useState(false);
+
+  // ============================================
+  // 根据档期/宗教自动切换流程模板
+  // ============================================
+  const initStepsByReligion = (religion: ReligionType) => {
+    const templateSteps = mockCeremonySteps[religion] || [];
+    setSteps(templateSteps.map(s => ({ ...s })));
+  };
+
+  // ============================================
+  // 从案例套用方案
+  // ============================================
+  const applyCasePlan = () => {
+    if (!casePlanData) return;
+    // 使用案例的宗教作为基础
+    const baseSteps = mockCeremonySteps[casePlanData.religion] || [];
+    // 将案例的流程亮点整合到步骤描述中
+    const mergedSteps = baseSteps.map((step, idx) => ({
+      ...step,
+      description: idx < casePlanData.flow.length
+        ? `${step.description}（参考案例：${casePlanData.flow[idx]}）`
+        : step.description
+    }));
+    setSteps(mergedSteps);
+    setCurrentReligion(casePlanData.religion);
+    setCaseApplied(true);
+    Taro.showToast({ title: `已套用：${casePlanData.caseTitle}`, icon: 'success' });
+    clearCasePlan();
+  };
 
   useDidShow(() => {
-    console.log('[CeremonyPage] 页面显示');
+    const currentSchedule = getCurrentSchedule();
+    console.log('[CeremonyPage] 当前档期:', currentSchedule);
+    console.log('[CeremonyPage] 宗教来源:', religionFromSchedule);
+    console.log('[CeremonyPage] 案例方案:', casePlanData);
+
+    // 优先级1：如果有案例套用数据，优先处理
+    if (casePlanData && !caseApplied) {
+      Taro.showModal({
+        title: '📋 套用案例方案',
+        content: `检测到优秀案例「${casePlanData.caseTitle}」\n是否将其流程和亮点应用到当前仪式？`,
+        confirmText: '立即套用',
+        cancelText: '暂不套用',
+        success: (res) => {
+          if (res.confirm) {
+            applyCasePlan();
+          } else {
+            clearCasePlan();
+            // 用档期宗教初始化
+            const religion = religionFromSchedule || currentReligion;
+            setCurrentReligion(religion);
+            initStepsByReligion(religion);
+          }
+        }
+      });
+      return;
+    }
+
+    // 优先级2：从档期读取宗教类型
+    if (currentSchedule && religionFromSchedule) {
+      setCurrentReligion(religionFromSchedule);
+      initStepsByReligion(religionFromSchedule);
+    } else {
+      initStepsByReligion(currentReligion);
+    }
   });
 
   usePullDownRefresh(() => {
@@ -38,15 +118,38 @@ const CeremonyPage: React.FC = () => {
     setTimeout(() => Taro.stopPullDownRefresh(), 1000);
   });
 
+  // 手动切换宗教
+  const handleReligionChange = (religion: ReligionType) => {
+    Taro.showModal({
+      title: '切换仪式模板',
+      content: `确认切换为${getReligionText(religion)}仪式模板吗？\n当前步骤进度将被重置。`,
+      success: (res) => {
+        if (res.confirm) {
+          setCurrentReligion(religion);
+          initStepsByReligion(religion);
+          setCaseApplied(false);
+        }
+      }
+    });
+  };
+
   const progress = useMemo(() => {
     const completed = steps.filter(s => s.completed).length;
     const total = steps.length;
     const totalDuration = steps.reduce((sum, s) => sum + s.duration, 0);
     const completedDuration = steps.filter(s => s.completed).reduce((sum, s) => sum + s.duration, 0);
-    return { completed, total, totalDuration, completedDuration, percent: total > 0 ? Math.round((completed / total) * 100) : 0 };
+    return {
+      completed,
+      total,
+      totalDuration,
+      completedDuration,
+      percent: total > 0 ? Math.round((completed / total) * 100) : 0
+    };
   }, [steps]);
 
-  const handleStepClick = (step: CeremonyStep) => {
+  const currentSchedule = getCurrentSchedule();
+
+  const handleStepClick = (step: CeremonyStep | CustomStep) => {
     setSteps(prev => prev.map(s =>
       s.id === step.id ? { ...s, completed: !s.completed } : s
     ));
@@ -84,7 +187,7 @@ const CeremonyPage: React.FC = () => {
   const handleRehearsal = () => {
     Taro.showModal({
       title: '流程彩排',
-      content: '确定要开始流程彩排吗？将按照仪式流程顺序模拟执行。',
+      content: `确定要开始${getReligionText(currentReligion)}仪式流程彩排吗？`,
       success: (res) => {
         if (res.confirm) {
           Taro.showToast({ title: '彩排开始', icon: 'loading', duration: 2000 });
@@ -101,8 +204,54 @@ const CeremonyPage: React.FC = () => {
     { value: 'record', label: '应变记录' }
   ];
 
+  const religionTabs: { key: ReligionType; label: string }[] = [
+    { key: 'buddhism', label: '☸️ 佛' },
+    { key: 'taoism', label: '☯️ 道' },
+    { key: 'christianity', label: '✝️ 基' },
+    { key: 'catholicism', label: '⛪ 天' },
+    { key: 'none', label: '🌸 无' }
+  ];
+
   const renderFlow = () => (
     <View>
+      {/* 宗教切换栏 */}
+      <View className={styles.card}>
+        <SectionHeader
+          title="仪式模板"
+          extra={caseApplied ? <Text style={{ color: '#D69E2E', fontSize: 22 }}>✨ 已套用案例</Text> : undefined}
+        />
+        <Text style={{ fontSize: 24, color: '#718096', display: 'block', marginBottom: 16 }}>
+          {currentSchedule
+            ? `当前档期：${currentSchedule.deceasedName} · ${currentSchedule.ceremonyType}`
+            : '手动选择仪式模板，或从「档期详情」进入自动匹配'}
+        </Text>
+        <View style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {religionTabs.map(tab => (
+            <View
+              key={tab.key}
+              className={classnames(
+                styles.optionItem,
+                currentReligion === tab.key && styles.active
+              )}
+              style={{
+                padding: '16rpx 28rpx',
+                borderRadius: 12,
+                background: currentReligion === tab.key
+                  ? 'rgba(44, 82, 130, 0.1)'
+                  : '#F7FAFC',
+                border: `2rpx solid ${currentReligion === tab.key ? '#2C5282' : '#E2E8F0'}`,
+                color: currentReligion === tab.key ? '#2C5282' : '#718096',
+                fontSize: 24,
+                fontWeight: currentReligion === tab.key ? 600 : 400
+              }}
+              onClick={() => handleReligionChange(tab.key)}
+            >
+              {tab.label}
+            </View>
+          ))}
+        </View>
+      </View>
+
       <View className={styles.card}>
         <View className={styles.progressBar}>
           <View className={styles.progressStat}>
@@ -122,7 +271,7 @@ const CeremonyPage: React.FC = () => {
         </View>
       </View>
 
-      <StepTimeline steps={steps} onStepClick={handleStepClick} />
+      <StepTimeline steps={steps as CeremonyStep[]} onStepClick={handleStepClick} />
     </View>
   );
 
@@ -165,10 +314,18 @@ const CeremonyPage: React.FC = () => {
           </View>
         </View>
         <View className={styles.videoInfo}>
-          <Text className={styles.videoTitle}>张建国先生生平纪念视频</Text>
+          <Text className={styles.videoTitle}>
+            {currentSchedule
+              ? `${currentSchedule.deceasedName}生平纪念视频`
+              : '张建国先生生平纪念视频'}
+          </Text>
           <View className={styles.videoMeta}>
             <Text>时长：08分30秒</Text>
-            <Text>张建国 · 享年78岁</Text>
+            <Text>
+              {currentSchedule
+                ? `${currentSchedule.deceasedName} · 享年${currentSchedule.age}岁`
+                : '张建国 · 享年78岁'}
+            </Text>
           </View>
         </View>
       </View>
@@ -196,7 +353,7 @@ const CeremonyPage: React.FC = () => {
   const renderRehearsal = () => (
     <View>
       <View className={styles.card}>
-        <SectionHeader title="流程彩排" subtitle="模拟仪式流程，熟悉每个环节" />
+        <SectionHeader title="流程彩排" subtitle={`${getReligionText(currentReligion)}仪式 · ${steps.length}个环节`} />
         <Text style={{ fontSize: '28rpx', color: '#4A5568', lineHeight: 1.8 }}>
           彩排模式将按照当前的仪式流程顺序进行模拟，帮助您熟悉每个环节的内容、时间和主持要点。
           彩排过程中可以暂停、跳过或重复某个步骤。
@@ -204,7 +361,14 @@ const CeremonyPage: React.FC = () => {
         <View className={styles.actionRow}>
           <View
             className={classnames(styles.actionBtn, styles.secondary)}
-            onClick={() => Taro.showToast({ title: '查看彩排要点', icon: 'none' })}
+            onClick={() => {
+              const tips = steps.map((s, i) => `${i + 1}. ${s.title}`).join('\n');
+              Taro.showModal({
+                title: '彩排要点',
+                content: tips,
+                showCancel: false
+              });
+            }}
           >
             📋 彩排要点
           </View>
@@ -220,13 +384,13 @@ const CeremonyPage: React.FC = () => {
       <View className={styles.card}>
         <SectionHeader title="彩排进度" subtitle="本次仪式" />
         <ScrollView>
-          {steps.map(step => (
+          {steps.map((step, idx) => (
             <View
               key={step.id}
               style={{
                 display: 'flex',
                 padding: '20rpx 0',
-                borderBottom: step.id !== steps[steps.length - 1].id ? '2rpx solid #EDF2F7' : 'none',
+                borderBottom: idx !== steps.length - 1 ? '2rpx solid #EDF2F7' : 'none',
                 alignItems: 'center'
               }}
             >
@@ -247,7 +411,9 @@ const CeremonyPage: React.FC = () => {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: '28rpx', color: '#1A202C', fontWeight: '500' }}>{step.title}</Text>
-                <Text style={{ fontSize: '24rpx', color: '#718096', marginTop: '8rpx' }}>{step.duration}分钟 · {step.description}</Text>
+                <Text style={{ fontSize: '24rpx', color: '#718096', marginTop: '8rpx' }}>
+                  {step.duration}分钟 · {step.description}
+                </Text>
               </View>
             </View>
           ))}
@@ -291,13 +457,36 @@ const CeremonyPage: React.FC = () => {
   return (
     <View className={styles.container}>
       <View className={styles.currentSchedule}>
-        <Text className={styles.currentTitle}>🕯 当前仪式 · {getReligionText(currentReligion)}</Text>
-        <Text className={styles.currentName}>张建国先生</Text>
-        <Text style={{ fontSize: '26rpx', opacity: 0.9 }}>佛教传统仪式 · 追思厅A</Text>
-        <View className={styles.currentInfo}>
-          <Text>⏰ 08:30-10:30</Text>
-          <Text>📍 市殡仪馆</Text>
-        </View>
+        <Text className={styles.currentTitle}>
+          🕯 当前仪式 · {getReligionText(currentReligion)}
+          {caseApplied && <Text style={{ marginLeft: 8 }}>✨</Text>}
+        </Text>
+        {currentSchedule ? (
+          <>
+            <Text className={styles.currentName}>
+              {currentSchedule.deceasedName}
+              {currentSchedule.gender === 'male' ? '先生' : '女士'}
+            </Text>
+            <Text style={{ fontSize: '26rpx', opacity: 0.9 }}>
+              {currentSchedule.ceremonyType} · {currentSchedule.hallName}
+            </Text>
+            <View className={styles.currentInfo}>
+              <Text>⏰ {currentSchedule.time}</Text>
+              <Text>📍 {currentSchedule.location}</Text>
+            </View>
+          </>
+        ) : (
+          <>
+            <Text className={styles.currentName}>示例仪式</Text>
+            <Text style={{ fontSize: '26rpx', opacity: 0.9 }}>
+              {getReligionText(currentReligion)}传统仪式 · 追思厅A
+            </Text>
+            <View className={styles.currentInfo}>
+              <Text>⏰ 08:30-10:30</Text>
+              <Text>📍 市殡仪馆</Text>
+            </View>
+          </>
+        )}
       </View>
 
       <View className={styles.tabBar}>

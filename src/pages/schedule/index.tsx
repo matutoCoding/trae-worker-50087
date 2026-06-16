@@ -6,28 +6,28 @@ import classnames from 'classnames';
 import ScheduleCard from '@/components/ScheduleCard';
 import SectionHeader from '@/components/SectionHeader';
 import EmptyState from '@/components/EmptyState';
-import { ScheduleItem, ScheduleStatus } from '@/types';
-import { mockSchedules, getSchedulesByStatus } from '@/data/schedule';
+import { ScheduleStatus } from '@/types';
+import { useAppStore } from '@/store/AppContext';
 import { getMonthDays, getFirstDayOfMonth } from '@/utils';
 
 type FilterType = 'all' | ScheduleStatus;
 
 const SchedulePage: React.FC = () => {
-  const [schedules, setSchedules] = useState<ScheduleItem[]>(mockSchedules);
+  const { schedules, addSchedule } = useAppStore();
   const [filter, setFilter] = useState<FilterType>('all');
-  const [currentDate] = useState(new Date('2026-06-17'));
   const [year, setYear] = useState(2026);
   const [month, setMonth] = useState(5);
   const [selectedDate, setSelectedDate] = useState<string>('2026-06-17');
 
   useDidShow(() => {
-    console.log('[SchedulePage] 页面显示');
+    console.log('[SchedulePage] 页面显示，档期总数:', schedules.length);
   });
 
   usePullDownRefresh(() => {
     console.log('[SchedulePage] 下拉刷新');
     setTimeout(() => {
       Taro.stopPullDownRefresh();
+      Taro.showToast({ title: '刷新完成', icon: 'success' });
     }, 1000);
   });
 
@@ -50,7 +50,12 @@ const SchedulePage: React.FC = () => {
     if (selectedDate) {
       list = list.filter(s => s.date === selectedDate);
     }
-    return list.sort((a, b) => a.time.localeCompare(b.time));
+    return list.sort((a, b) => {
+      // free档期排后面，其他按时间排序
+      if (a.status === 'free' && b.status !== 'free') return 1;
+      if (a.status !== 'free' && b.status === 'free') return -1;
+      return a.time.localeCompare(b.time);
+    });
   }, [schedules, filter, selectedDate]);
 
   const calendarDays = useMemo(() => {
@@ -89,6 +94,10 @@ const SchedulePage: React.FC = () => {
     if (date) {
       setSelectedDate(date);
     }
+  };
+
+  const handleAddSchedule = () => {
+    Taro.navigateTo({ url: '/pages/schedule-add/index' });
   };
 
   const filterOptions: { value: FilterType; label: string }[] = [
@@ -171,10 +180,7 @@ const SchedulePage: React.FC = () => {
         title="档期列表"
         subtitle={selectedDate ? `${selectedDate} 共${filteredSchedules.length}条` : ''}
         extra={
-          <View
-            className={styles.addBtn}
-            onClick={() => Taro.showToast({ title: '新增档期功能', icon: 'none' })}
-          >
+          <View className={styles.addBtn} onClick={handleAddSchedule}>
             + 新增
           </View>
         }
@@ -187,7 +193,7 @@ const SchedulePage: React.FC = () => {
       ) : (
         <EmptyState
           icon="📅"
-          title="暂无档期"
+          title={filter === 'free' ? '暂无空闲档期' : '暂无档期'}
           description="点击右上方新增按钮添加新档期"
         />
       )}

@@ -5,6 +5,7 @@ export default defineAppConfig({
     'pages/cases/index',
     'pages/profile/index',
     'pages/schedule-detail/index',
+    'pages/schedule-add/index',
     'pages/eulogy/index',
     'pages/family/index',
     'pages/religion/index',

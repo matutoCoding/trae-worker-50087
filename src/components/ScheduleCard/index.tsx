@@ -18,16 +18,8 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({ data, onClick }) => {
       if (onClick) {
         onClick(data);
       } else {
-        Taro.showModal({
-          title: '空闲档期',
-          content: `${formatDateCN(data.date)} ${data.time}\n此档期可预约，是否立即创建预约？`,
-          confirmText: '创建预约',
-          cancelText: '稍后再说',
-          success: (res) => {
-            if (res.confirm) {
-              Taro.showToast({ title: '新增档期功能开发中', icon: 'none' });
-            }
-          }
+        Taro.navigateTo({
+          url: `/pages/schedule-add/index?date=${data.date}&time=${encodeURIComponent(data.time)}`
         });
       }
     } else {
